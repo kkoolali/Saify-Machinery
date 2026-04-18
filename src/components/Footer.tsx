@@ -1,4 +1,4 @@
-import { Hammer } from 'lucide-react';
+import { Hammer, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -19,7 +19,22 @@ export default function Footer() {
             <p className="text-gray-400 text-sm leading-relaxed mb-4">
               Pulgaon's trusted wholesale and retail hardware, plumbing, and machinery store since 2019. Your one-stop solution for all construction and agricultural needs.
             </p>
-            <p className="text-sm font-medium text-white tracking-wider">GST: 27CHCPS0273C1ZK</p>
+            <p className="text-sm font-medium text-white tracking-wider mb-6">GST: 27CHCPS0273C1ZK</p>
+            
+            <div className="flex items-center gap-4">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-brand-blue hover:text-white transition-all text-gray-400" aria-label="Facebook">
+                <Facebook size={18} />
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all text-gray-400" aria-label="Instagram">
+                <Instagram size={18} />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-blue-400 hover:text-white transition-all text-gray-400" aria-label="Twitter">
+                <Twitter size={18} />
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all text-gray-400" aria-label="YouTube">
+                <Youtube size={18} />
+              </a>
+            </div>
           </div>
 
           <div>

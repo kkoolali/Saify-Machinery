@@ -1,7 +1,64 @@
-import { motion } from 'motion/react';
-import { Award, ShieldCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Award, ShieldCheck, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+
+const carouselItems = [
+  {
+    id: "texmo",
+    content: (
+      <div className="bg-white rounded-2xl p-8 flex flex-col items-center justify-center aspect-[16/9] w-full h-full shadow-2xl border border-gray-100">
+        <img 
+          src="https://texmopipe.com/wp-content/uploads/2022/10/Texmo-logo-2022-1.png" 
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/texmo-logo.png";
+          }}
+          alt="Texmo Pipes and Products Limited" 
+          className="w-full h-full object-contain drop-shadow-sm"
+        />
+      </div>
+    )
+  },
+  {
+    id: "ajanta",
+    content: (
+      <div className="bg-white rounded-2xl p-8 flex flex-col items-center justify-center aspect-[16/9] w-full h-full shadow-2xl border border-gray-100">
+        <div className="text-center flex flex-col items-center justify-center w-full h-full">
+          <h3 className="text-5xl md:text-6xl font-black text-blue-800 tracking-tighter uppercase" style={{ fontFamily: 'Arial Black, Impact, sans-serif'}}>Ajanta</h3>
+          <p className="text-blue-600 font-bold mt-2 tracking-[0.3em] text-lg uppercase">Pumps</p>
+        </div>
+      </div>
+    )
+  },
+  {
+    id: "viking",
+    content: (
+      <div className="bg-white rounded-2xl p-8 flex flex-col items-center justify-center aspect-[16/9] w-full h-full shadow-2xl border border-gray-100">
+        <div className="text-center flex flex-col items-center justify-center w-full h-full">
+          <h3 className="text-5xl md:text-6xl font-black text-red-600 tracking-tighter uppercase italic" style={{ fontFamily: 'Arial Black, Impact, sans-serif'}}>Viking</h3>
+          <p className="text-gray-800 font-bold mt-2 tracking-widest text-sm uppercase border-t-2 border-red-600 pt-2">Water Pumps</p>
+        </div>
+      </div>
+    )
+  }
+];
 
 export default function Brands() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % carouselItems.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
+  };
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <section id="brands" className="py-20 bg-brand-blue-dark text-white relative overflow-hidden">
       {/* Abstract Background pattern */}
@@ -51,33 +108,65 @@ export default function Brands() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+            className="flex flex-col items-center"
           >
-            {/* Brand Cards */}
-            <div className="bg-white rounded-xl p-4 flex flex-col items-center justify-center aspect-video hover:scale-105 transition-transform duration-300">
-              {/* Texmo Pipes Logo */}
-              <img 
-                src="https://texmopipe.com/wp-content/uploads/2022/10/Texmo-logo-2022-1.png" 
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/texmo-logo.png"; // User can drag their logo here
-                }}
-                alt="Texmo Pipes and Products Limited" 
-                className="w-full h-full object-contain drop-shadow-sm"
-              />
+            {/* Carousel Container */}
+            <div className="relative w-full max-w-lg mx-auto group">
+              <div className="relative overflow-hidden rounded-2xl aspect-[16/9] shadow-2xl">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentIndex}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    className="absolute inset-0"
+                  >
+                    {carouselItems[currentIndex].content}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Navigation Arrows */}
+              <button 
+                onClick={prevSlide}
+                className="absolute left-[-20px] top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-orange-600 focus:outline-none z-20"
+                aria-label="Previous Brand"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button 
+                onClick={nextSlide}
+                className="absolute right-[-20px] top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-orange text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-orange-600 focus:outline-none z-20"
+                aria-label="Next Brand"
+              >
+                <ChevronRight size={20} />
+              </button>
+
+              {/* Indicators */}
+              <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-3">
+                {carouselItems.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      currentIndex === index ? 'bg-brand-orange' : 'bg-white/30 hover:bg-white/50'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
             </div>
-            
-            <div className="bg-white rounded-xl p-8 flex flex-col items-center justify-center aspect-video hover:scale-105 transition-transform duration-300">
-               <h3 className="text-3xl font-black text-blue-800 tracking-tighter uppercase text-center">Ajanta</h3>
-              <p className="text-gray-500 font-bold mt-1 tracking-widest text-sm">PUMPS</p>
-            </div>
-            
-            <div className="bg-white rounded-xl p-8 flex items-center justify-center aspect-video hover:scale-105 transition-transform duration-300">
-               <h3 className="text-3xl font-black text-red-600 tracking-tighter uppercase text-center">Viking</h3>
-            </div>
-            
-            <div className="bg-white rounded-xl p-8 flex items-center justify-center aspect-video hover:scale-105 transition-transform duration-300">
-               <h3 className="text-2xl font-black text-gray-800 text-center uppercase tracking-wider">Premium<br/><span className="text-brand-orange text-lg">Brands</span></h3>
+
+            {/* CTA Button */}
+            <div className="mt-16 w-full max-w-lg text-center">
+              <a 
+                href="#products" 
+                className="inline-flex items-center justify-center w-full px-8 py-4 text-base font-bold text-brand-blue-dark bg-white rounded-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl group"
+              >
+                View All Premium Brands
+                <ArrowRight size={20} className="ml-3 group-hover:translate-x-1 transition-transform" />
+              </a>
             </div>
           </motion.div>
         </div>

@@ -7,7 +7,9 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import About from './components/About';
 import Products from './components/Products';
+import FeaturedProducts from './components/FeaturedProducts';
 import Brands from './components/Brands';
+import Testimonials from './components/Testimonials';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
@@ -20,7 +22,9 @@ export default function App() {
         <Hero />
         <About />
         <Products />
+        <FeaturedProducts />
         <Brands />
+        <Testimonials />
         <Contact />
       </main>
       <Footer />
