@@ -18,12 +18,12 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        (request.auth.token.email.toLower() == "aliasgar.saify@gmail.com" && request.auth.token.email_verified == true)
+        (request.auth.token.email.matches("(?i)^aliasgar\\.saify@gmail\\.com$") && request.auth.token.email_verified == true)
       );
     }
 
     function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+      return id is string && id.size() <= 128;
     }
 
     function incoming() {
@@ -37,69 +37,68 @@ service cloud.firestore {
     // --- Validation Helpers ---
 
     function isValidCategory(data) {
-      return data.id is string && data.id.size() <= 64 &&
-             data.title is string && data.title.size() <= 128 &&
-             data.icon is string && data.icon.size() <= 64 &&
-             data.items is list && data.items.size() <= 20 &&
-             data.images is list && data.images.size() <= 10;
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.icon is string && data.icon.size() <= 128 &&
+             data.color is string && data.color.size() <= 128 &&
+             data.items is list && data.items.size() <= 50 &&
+             data.images is list && data.images.size() <= 20;
     }
 
     function isValidFeaturedProduct(data) {
-      return data.id is string && data.id.size() <= 64 &&
-             data.title is string && data.title.size() <= 128 &&
-             data.description is string && data.description.size() <= 500 &&
-             data.image is string && data.image.size() <= 512 &&
-             data.linkText is string && data.linkText.size() <= 64 &&
-             data.categoryHash is string && data.categoryHash.size() <= 256;
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.image is string && data.image.size() <= 1024 &&
+             data.linkText is string && data.linkText.size() <= 128 &&
+             data.categoryHash is string && data.categoryHash.size() <= 512;
     }
 
     function isValidTestimonial(data) {
       return data.name is string && data.name.size() <= 128 &&
-             data.text is string && data.text.size() <= 1000 &&
+             data.text is string && data.text.size() <= 2000 &&
              data.rating is number && data.rating >= 1 && data.rating <= 5;
     }
 
     function isValidInquiry(data) {
-      return data.name is string && data.name.size() <= 128 &&
-             data.message is string && data.message.size() <= 2000 &&
+      return data.name is string && data.name.size() <= 256 &&
+             data.phone is string && data.phone.size() <= 32 &&
+             data.message is string && data.message.size() <= 5000 &&
              data.createdAt == request.time;
     }
 
     function isValidBrand(data) {
-      return data.name is string && data.name.size() <= 128 &&
-             data.logo is string && data.logo.size() <= 1024 &&
-             (!('website' in data) || (data.website is string && data.website.size() <= 512));
+      return data.name is string && data.name.size() <= 256 &&
+             data.logo is string && data.logo.size() <= 2048 &&
+             (!('website' in data) || (data.website is string && data.website.size() <= 1024));
     }
 
     function isValidSiteConfig(id, data) {
       return (id == 'global' && 
-               data.storeName is string && data.storeName.size() <= 128 &&
-               data.gstNumber is string && data.gstNumber.size() <= 64 &&
-               data.phone is string && data.phone.size() <= 32 &&
-               data.whatsapp is string && data.whatsapp.size() <= 32 &&
-               data.email is string && data.email.size() <= 128 &&
-               data.address is string && data.address.size() <= 512 &&
-               data.footerDescription is string && data.footerDescription.size() <= 1000 &&
-               data.socials is map &&
-               data.socials.get('facebook', '') is string && data.socials.get('facebook', '').size() <= 512 &&
-               data.socials.get('instagram', '') is string && data.socials.get('instagram', '').size() <= 512 &&
-               data.socials.get('youtube', '') is string && data.socials.get('youtube', '').size() <= 512
+               data.storeName is string && data.storeName.size() <= 256 &&
+               data.gstNumber is string && data.gstNumber.size() <= 128 &&
+               data.phone is string && data.phone.size() <= 64 &&
+               data.whatsapp is string && data.whatsapp.size() <= 64 &&
+               data.email is string && data.email.size() <= 256 &&
+               data.address is string && data.address.size() <= 1024 &&
+               data.footerDescription is string && data.footerDescription.size() <= 2000 &&
+               data.socials is map
              ) ||
              (id == 'hero' && 
-               data.title is string && data.title.size() <= 256 &&
-               data.description is string && data.description.size() <= 1000 &&
-               data.backgroundImage is string && data.backgroundImage.size() <= 1024 &&
-               data.ctaText is string && data.ctaText.size() <= 64 &&
-               data.badgeText is string && data.badgeText.size() <= 256
+               data.title is string && data.title.size() <= 512 &&
+               data.description is string && data.description.size() <= 2000 &&
+               data.backgroundImage is string && data.backgroundImage.size() <= 2048 &&
+               data.ctaText is string && data.ctaText.size() <= 128 &&
+               data.badgeText is string && data.badgeText.size() <= 512
              ) ||
              (id == 'about' && 
-               data.badge is string && data.badge.size() <= 128 &&
-               data.title is string && data.title.size() <= 256 &&
-               data.description is string && data.description.size() <= 2000 &&
-               data.experienceTitle is string && data.experienceTitle.size() <= 256 &&
-               data.experienceDescription is string && data.experienceDescription.size() <= 2000 &&
-               data.image is string && data.image.size() <= 1024 &&
-               data.ownerName is string && data.ownerName.size() <= 128
+               data.badge is string && data.badge.size() <= 256 &&
+               data.title is string && data.title.size() <= 512 &&
+               data.description is string && data.description.size() <= 5000 &&
+               data.experienceTitle is string && data.experienceTitle.size() <= 512 &&
+               data.experienceDescription is string && data.experienceDescription.size() <= 5000 &&
+               data.image is string && data.image.size() <= 2048 &&
+               data.ownerName is string && data.ownerName.size() <= 256
              );
     }
 

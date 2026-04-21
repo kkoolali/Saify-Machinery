@@ -57,12 +57,13 @@ const ManageBrands: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log("Saving brand with data:", formData);
       await addDoc(collection(db, 'brands'), formData);
       setIsAdding(false);
       setFormData({ name: '', logo: '', website: '' });
     } catch (error) {
       console.error("Error saving brand:", error);
-      alert("Failed to save.");
+      alert(`Failed to save: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
