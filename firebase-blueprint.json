@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Product Category",
+      "description": "A category of products with a gallery and list of features.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "icon": { "type": "string", "description": "Lucide icon name" },
+        "color": { "type": "string", "description": "Tailwind color class for the icon background" },
+        "items": { "type": "array", "items": { "type": "string" } },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "title", "icon", "items", "images"]
+    },
+    "FeaturedProduct": {
+      "title": "Featured Product",
+      "description": "Products highlighted on the homepage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "image": { "type": "string" },
+        "fallbackUrl": { "type": "string" },
+        "linkText": { "type": "string" },
+        "categoryHash": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "title", "description", "image", "linkText", "categoryHash"]
+    },
+    "Testimonial": {
+      "title": "Customer Testimonial",
+      "description": "A review from a customer displayed in the testimonials section.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "avatar": { "type": "string" },
+        "rating": { "type": "number" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "rating", "text"]
+    },
+    "Inquiry": {
+      "title": "Customer Inquiry",
+      "description": "A message submitted through the contact form.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "message", "createdAt"]
+    },
+    "Admin": {
+      "title": "Administrator",
+      "description": "A user with administrative access.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "categories": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Product categories shown in the gallery."
+    },
+    "featured_products": {
+      "schema": { "$ref": "#/entities/FeaturedProduct" },
+      "description": "Featured products on the landing page."
+    },
+    "testimonials": {
+      "schema": { "$ref": "#/entities/Testimonial" },
+      "description": "Customer reviews and testimonials."
+    },
+    "inquiries": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Contact form submissions."
+    },
+    "admins": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "List of authorized administrators."
+    }
+  }
+}

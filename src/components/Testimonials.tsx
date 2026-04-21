@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Star } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
-const reviews = [
+const localReviews = [
+  // fallback reviews
   {
     id: 1,
     name: "Rahul D.",
@@ -29,6 +33,21 @@ const reviews = [
 ];
 
 export default function Testimonials() {
+  const [reviews, setReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'testimonials'), orderBy('name'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (data.length > 0) {
+        setReviews(data);
+      } else {
+        setReviews(localReviews);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <section id="testimonials" className="py-20 bg-white">
       <div className="container mx-auto px-4 md:px-6">

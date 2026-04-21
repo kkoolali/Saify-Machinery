@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { Droplet, Wrench, Sprout, Zap, CheckCircle2, Loader2, ChevronLeft, ChevronRight, X, ImageIcon } from 'lucide-react';
 
-const categories = [
+const iconMap: Record<string, any> = { Droplet, Wrench, Sprout, Zap };
+
+const localCategories = [
+  // ... local categories same as before as fallback
   {
     id: 'plumbing',
     title: 'Hardware & Plumbing',
@@ -75,20 +80,32 @@ const categories = [
 
 export default function Products() {
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<typeof categories>([]);
+  const [products, setProducts] = useState<any[]>([]);
   
   // Modal & Carousel State
-  const [selectedCategory, setSelectedCategory] = useState<typeof categories[0] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    // Simulate an asynchronous API call to fetch products
-    const timer = setTimeout(() => {
-      setProducts(categories);
+    const q = query(collection(db, 'categories'), orderBy('id'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => {
+        const item = doc.data();
+        return {
+          ...item,
+          icon: iconMap[item.icon] || iconMap['Wrench']
+        };
+      });
+      
+      if (data.length > 0) {
+        setProducts(data);
+      } else {
+        setProducts(localCategories);
+      }
       setIsLoading(false);
-    }, 1200);
+    });
 
-    return () => clearTimeout(timer);
+    return unsubscribe;
   }, []);
 
   // Keyboard navigation for the modal carousel
@@ -103,7 +120,7 @@ export default function Products() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedCategory]);
 
-  const openModal = (category: typeof categories[0]) => {
+  const openModal = (category: any) => {
     setSelectedCategory(category);
     setCurrentImageIndex(0);
     document.body.style.overflow = 'hidden'; // prevent scrolling

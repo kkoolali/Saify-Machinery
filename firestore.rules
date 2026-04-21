@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == "ALIASGAR.SAIFY@gmail.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Helpers ---
+
+    function isValidCategory(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.title is string && data.title.size() <= 128 &&
+             data.icon is string && data.icon.size() <= 64 &&
+             data.items is list && data.items.size() <= 20 &&
+             data.images is list && data.images.size() <= 10;
+    }
+
+    function isValidFeaturedProduct(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.title is string && data.title.size() <= 128 &&
+             data.description is string && data.description.size() <= 500 &&
+             data.image is string && data.image.size() <= 512 &&
+             data.linkText is string && data.linkText.size() <= 64 &&
+             data.categoryHash is string && data.categoryHash.size() <= 256;
+    }
+
+    function isValidTestimonial(data) {
+      return data.name is string && data.name.size() <= 128 &&
+             data.text is string && data.text.size() <= 1000 &&
+             data.rating is number && data.rating >= 1 && data.rating <= 5;
+    }
+
+    function isValidInquiry(data) {
+      return data.name is string && data.name.size() <= 128 &&
+             data.message is string && data.message.size() <= 2000 &&
+             data.createdAt == request.time;
+    }
+
+    // --- Match Rules ---
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidCategory(incoming()) && isValidId(categoryId);
+    }
+
+    match /featured_products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidFeaturedProduct(incoming()) && isValidId(productId);
+    }
+
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidTestimonial(incoming()) && isValidId(testimonialId);
+    }
+
+    match /inquiries/{inquiryId} {
+      allow create: if isValidInquiry(incoming()) && isValidId(inquiryId);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      // Only admins can see who else is an admin or add new ones
+      allow read, write: if isAdmin();
+      // Allow initial setup check for the specific user
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+    }
+  }
+}

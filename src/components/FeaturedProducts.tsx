@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
-const featuredProducts = [
+const localFeaturedProducts = [
+  // Fallback items
   {
     id: 1,
     title: "Texmo Submersible Pumps",
@@ -30,6 +34,21 @@ const featuredProducts = [
 ];
 
 export default function FeaturedProducts() {
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'featured_products'), orderBy('id'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      if (data.length > 0) {
+        setFeaturedProducts(data);
+      } else {
+        setFeaturedProducts(localFeaturedProducts);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   return (
     <section id="featured" className="py-20 bg-gray-50 border-t border-gray-100">
       <div className="container mx-auto px-4 md:px-6">

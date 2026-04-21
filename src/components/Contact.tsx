@@ -1,25 +1,41 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { MapPin, Phone, Clock, CreditCard, Loader2, Send, CheckCircle } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    message: ''
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate network request for form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await addDoc(collection(db, 'inquiries'), {
+        ...formData,
+        createdAt: serverTimestamp()
+      });
+      
       setIsSuccess(true);
+      setFormData({ name: '', phone: '', message: '' });
       
       // Reset success message after 5 seconds
       setTimeout(() => {
         setIsSuccess(false);
       }, 5000);
-    }, 1500);
+    } catch (error) {
+      console.error("Error submitting inquiry:", error);
+      alert("Failed to send inquiry. Please try again or contact us via phone.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -122,6 +138,8 @@ export default function Contact() {
                       type="text" 
                       id="name" 
                       required
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all"
                       placeholder="John Doe"
                       disabled={isSubmitting}
@@ -134,6 +152,8 @@ export default function Contact() {
                       type="tel" 
                       id="phone" 
                       required
+                      value={formData.phone}
+                      onChange={e => setFormData({...formData, phone: e.target.value})}
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all"
                       placeholder="+91 ...."
                       disabled={isSubmitting}
@@ -146,6 +166,8 @@ export default function Contact() {
                       id="message" 
                       rows={4}
                       required
+                      value={formData.message}
+                      onChange={e => setFormData({...formData, message: e.target.value})}
                       className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all resize-none"
                       placeholder="Tell us what you need..."
                       disabled={isSubmitting}
