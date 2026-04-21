@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(user);
       if (user) {
         // Special case for super-admin as per firestore.rules
-        const isSuperAdmin = user.email === 'ALIASGAR.SAIFY@gmail.com' && user.emailVerified;
+        const isSuperAdmin = user.email?.toLowerCase() === 'aliasgar.saify@gmail.com' && user.emailVerified;
         
         if (isSuperAdmin) {
           setIsAdmin(true);

@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { Plus, Edit2, Trash2, Save, X, ImageIcon, CheckCircle2, ChevronRight, ChevronDown, ShoppingBag } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
+import { 
+  Plus, Edit2, Trash2, Save, X, ImageIcon, ShoppingBag, Loader2, Upload, 
+  Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, 
+  Cog, Construction
+} from 'lucide-react';
 
 interface Category {
   id: string;
@@ -13,11 +18,26 @@ interface Category {
   images: string[];
 }
 
+const AVAILABLE_ICONS = [
+  { name: 'Droplet', icon: Droplet },
+  { name: 'Wrench', icon: Wrench },
+  { name: 'Sprout', icon: Sprout },
+  { name: 'Zap', icon: Zap },
+  { name: 'Lightbulb', icon: Lightbulb },
+  { name: 'Hammer', icon: Hammer },
+  { name: 'Settings', icon: Settings },
+  { name: 'Home', icon: Home },
+  { name: 'Cog', icon: Cog },
+  { name: 'Construction', icon: Construction },
+];
+
 const ManageProducts: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -26,7 +46,7 @@ const ManageProducts: React.FC = () => {
     icon: 'Wrench',
     color: 'bg-blue-50 text-brand-blue',
     items: '',
-    images: ''
+    images: [] as string[]
   });
 
   useEffect(() => {
@@ -42,12 +62,46 @@ const ManageProducts: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const newImageUrls: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const storageRef = ref(storage, `categories/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(snapshot.ref);
+        newImageUrls.push(url);
+      }
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...newImageUrls]
+      }));
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      alert("Failed to upload images. Please try again.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
       ...formData,
       items: formData.items.split('\n').filter(i => i.trim()),
-      images: formData.images.split('\n').filter(i => i.trim()),
     };
 
     try {
@@ -58,7 +112,7 @@ const ManageProducts: React.FC = () => {
         await addDoc(collection(db, 'categories'), payload);
         setIsAdding(false);
       }
-      setFormData({ id: '', title: '', icon: 'Wrench', color: 'bg-blue-50 text-brand-blue', items: '', images: '' });
+      setFormData({ id: '', title: '', icon: 'Wrench', color: 'bg-blue-50 text-brand-blue', items: '', images: [] });
     } catch (error) {
       console.error("Error saving category:", error);
       alert("Failed to save. Check console for details.");
@@ -72,7 +126,7 @@ const ManageProducts: React.FC = () => {
       icon: cat.icon,
       color: cat.color,
       items: cat.items.join('\n'),
-      images: cat.images.join('\n')
+      images: cat.images || []
     });
     setEditingId(cat.docId);
     setIsAdding(true);
@@ -84,7 +138,12 @@ const ManageProducts: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading products...</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <Loader2 size={40} className="text-brand-orange animate-spin mb-4" />
+      <p className="text-gray-500 font-medium">Loading catalog data...</p>
+    </div>
+  );
 
   return (
     <div className="space-y-8">
@@ -107,38 +166,114 @@ const ManageProducts: React.FC = () => {
             <h4 className="text-lg font-bold">{editingId ? 'Edit Category' : 'New Category'}</h4>
             <button onClick={() => { setIsAdding(false); setEditingId(null); }} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
           </div>
-          <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
+          <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ID (Slug)</label>
-                <input required value={formData.id} onChange={e => setFormData({...formData, id: e.target.value})} type="text" placeholder="plumbing" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange outline-none" />
+                <label className="block text-sm font-bold text-gray-900 mb-2">Basic Information</label>
+                <div className="space-y-4">
+                  <input required value={formData.id} onChange={e => setFormData({...formData, id: e.target.value})} type="text" placeholder="ID (e.g., plumbing)" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all" />
+                  <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} type="text" placeholder="Category Title" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all" />
+                </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} type="text" placeholder="Hardware & Plumbing" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange outline-none" />
+                <label className="block text-sm font-bold text-gray-900 mb-2">Display Style & Icon</label>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-5 gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    {AVAILABLE_ICONS.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <button
+                          key={item.name}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, icon: item.name })}
+                          className={`p-3 rounded-lg flex items-center justify-center transition-all ${
+                            formData.icon === item.name 
+                              ? 'bg-brand-orange text-white shadow-md scale-110' 
+                              : 'bg-white text-gray-400 hover:text-brand-orange hover:bg-orange-50'
+                          }`}
+                          title={item.name}
+                        >
+                          <IconComponent size={20} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input required value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} type="text" placeholder="Tailwind Color Class (e.g. bg-blue-50 text-blue-600)" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
+                </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Icon Name (Lucide)</label>
-                <input required value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} type="text" placeholder="Droplet" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Color Class</label>
-                <input required value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} type="text" placeholder="bg-blue-50 text-brand-blue" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange outline-none" />
+                <label className="block text-sm font-bold text-gray-900 mb-2">Product List (One per line)</label>
+                <textarea required rows={5} value={formData.items} onChange={e => setFormData({...formData, items: e.target.value})} placeholder="PVC Pipes&#10;Water Tanks&#10;Valves" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all resize-none" />
               </div>
             </div>
-            <div className="space-y-4">
+
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Items (One per line)</label>
-                <textarea required rows={4} value={formData.items} onChange={e => setFormData({...formData, items: e.target.value})} placeholder="Pipes&#10;Fittings&#10;Valves" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gallery Image URLs (One per line)</label>
-                <textarea required rows={4} value={formData.images} onChange={e => setFormData({...formData, images: e.target.value})} placeholder="https://..." className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand-orange outline-none" />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-bold text-gray-900">Image Gallery</label>
+                  <button 
+                    type="button" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="text-xs font-bold text-brand-blue flex items-center gap-1 hover:text-brand-orange transition-colors"
+                  >
+                    {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    Upload New
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleFileUpload} 
+                    multiple 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 min-h-[120px] p-4 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  {formData.images.map((url, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group border border-gray-200 bg-white">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button 
+                        type="button" 
+                        onClick={() => removeImage(idx)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {!isUploading && formData.images.length === 0 && (
+                    <div className="col-span-3 flex flex-col items-center justify-center text-gray-400 py-8">
+                      <ImageIcon size={32} className="mb-2 opacity-20" />
+                      <p className="text-xs font-medium">No images uploaded yet</p>
+                    </div>
+                  )}
+                  {isUploading && (
+                    <div className="aspect-square rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                      <Loader2 size={24} className="text-brand-orange animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2">Recommended: 1200x800px. First image will be the primary one.</p>
               </div>
             </div>
-            <div className="md:col-span-2 flex justify-end gap-4 mt-4">
-              <button type="button" onClick={() => { setIsAdding(false); setEditingId(null); }} className="px-6 py-2 text-gray-500 font-bold">Cancel</button>
-              <button type="submit" className="px-10 py-2 bg-brand-orange text-white rounded-lg font-bold shadow-md hover:bg-orange-600 transition-all flex items-center gap-2">
+
+            <div className="md:col-span-2 flex justify-end gap-4 pt-6 border-t border-gray-100">
+              <button 
+                type="button" 
+                onClick={() => { setIsAdding(false); setEditingId(null); }} 
+                className="px-6 py-2 text-gray-500 font-bold hover:text-gray-900 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={isUploading}
+                className="px-10 py-3 bg-brand-orange text-white rounded-xl font-bold shadow-lg hover:bg-orange-600 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
                 <Save size={20} />
                 {editingId ? 'Update Category' : 'Save Category'}
               </button>
@@ -148,41 +283,57 @@ const ManageProducts: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 gap-4">
-        {categories.map((cat) => (
-          <div key={cat.docId} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-brand-blue/30 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${cat.color}`}>
-                <span className="text-sm font-bold">{cat.icon.charAt(0)}</span>
+        {categories.map((cat) => {
+          const IconComponent = AVAILABLE_ICONS.find(i => i.name === cat.icon)?.icon || Wrench;
+          return (
+            <div key={cat.docId} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-brand-blue/30 transition-all group">
+              <div className="flex items-center gap-5">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${cat.color}`}>
+                  <IconComponent size={28} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                    {cat.title} 
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-[10px] font-mono">{cat.id}</span>
+                  </h4>
+                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-400 font-medium">
+                    <span className="flex items-center gap-1"><ShoppingBag size={14} /> {cat.items.length} Products</span>
+                    <span className="flex items-center gap-1"><ImageIcon size={14} /> {cat.images?.length || 0} Images</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-gray-900">{cat.title} <span className="text-xs font-normal text-gray-400 ml-2">({cat.id})</span></h4>
-                <p className="text-xs text-gray-500">{cat.items.length} items • {cat.images.length} images</p>
+              
+              <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => handleEdit(cat)}
+                  className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                  title="Edit Category"
+                >
+                  <Edit2 size={20} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(cat.docId)}
+                  className="p-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                  title="Delete Category"
+                >
+                  <Trash2 size={20} />
+                </button>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => handleEdit(cat)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Edit"
-              >
-                <Edit2 size={18} />
-              </button>
-              <button 
-                onClick={() => handleDelete(cat.docId)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete"
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
 
         {categories.length === 0 && !isAdding && (
-          <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
-            <ShoppingBag className="mx-auto text-gray-300 mb-4" size={48} />
-            <p className="text-gray-500">Your product catalog is empty. Start by adding your first category.</p>
+          <div className="text-center py-24 bg-white rounded-3xl border border-dashed border-gray-200">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ShoppingBag className="text-gray-300" size={40} />
+            </div>
+            <h4 className="text-lg font-bold text-gray-900 mb-1">No Categories Yet</h4>
+            <p className="text-gray-500 max-w-xs mx-auto">Your product catalog is empty. Start by adding your first category like Plumbing or Agri-Tools.</p>
+            <button onClick={() => setIsAdding(true)} className="mt-8 text-brand-orange font-bold flex items-center gap-2 mx-auto hover:gap-3 transition-all">
+              <Plus size={20} />
+              Create First Category
+            </button>
           </div>
         )}
       </div>

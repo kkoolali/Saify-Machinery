@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Droplet, Wrench, Sprout, Zap, CheckCircle2, Loader2, ChevronLeft, ChevronRight, X, ImageIcon } from 'lucide-react';
+import { 
+  Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, 
+  Cog, Construction, CheckCircle2, Loader2, ChevronLeft, ChevronRight, X, ImageIcon 
+} from 'lucide-react';
 
-const iconMap: Record<string, any> = { Droplet, Wrench, Sprout, Zap };
+const iconMap: Record<string, any> = { 
+  Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, Cog, Construction 
+};
 
 const localCategories = [
   // ... local categories same as before as fallback
