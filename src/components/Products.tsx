@@ -163,9 +163,21 @@ export default function Products() {
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 min-h-[300px]">
-            <Loader2 size={48} className="text-brand-orange animate-spin mb-4" />
-            <p className="text-gray-500 font-medium animate-pulse">Loading categories & galleries...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white border border-gray-100 rounded-2xl p-8 space-y-6 animate-pulse">
+                <div className="w-14 h-14 rounded-xl bg-gray-100"></div>
+                <div className="h-6 bg-gray-100 rounded-md w-3/4"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-50 rounded-md w-full"></div>
+                  <div className="h-4 bg-gray-50 rounded-md w-5/6"></div>
+                  <div className="h-4 bg-gray-50 rounded-md w-4/6"></div>
+                </div>
+                <div className="pt-4 border-t border-gray-50">
+                  <div className="h-4 bg-gray-100 rounded-md w-1/2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -326,9 +338,9 @@ export default function Products() {
                   <a
                     href="#contact"
                     onClick={closeModal}
-                    className="w-full inline-flex justify-center items-center py-3.5 px-6 rounded-lg bg-gray-900 hover:bg-brand-blue text-white font-medium transition-colors"
+                    className="w-full inline-flex justify-center items-center py-4 px-6 rounded-xl bg-brand-orange hover:bg-orange-600 text-white font-black italic shadow-lg shadow-brand-orange/20 transition-all hover:-translate-y-1"
                   >
-                    Contact For Pricing
+                    Contact Us for Pricing
                   </a>
                 </div>
               </div>

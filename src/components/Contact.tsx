@@ -9,7 +9,7 @@ export default function Contact() {
   const [isSuccess, setIsSuccess] = useState(false);
   
   const [config, setConfig] = useState({
-    phone: '+91 9370162544',
+    phone: '9021313113',
     email: 'aliasgar.saify@gmail.com',
     address: 'Royal Complex, Near Railway Station, Nachangaon Road, Sawant Wada, Pulgaon, Maharashtra – 442302'
   });

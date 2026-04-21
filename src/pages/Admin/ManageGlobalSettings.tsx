@@ -10,8 +10,8 @@ const ManageGlobalSettings: React.FC = () => {
   const [formData, setFormData] = useState({
     storeName: 'Saify Machinery',
     gstNumber: '27CHCPS0273C1ZK',
-    phone: '+91 9370162544',
-    whatsapp: '919370162544',
+    phone: '9021313113',
+    whatsapp: '919021313113',
     email: 'aliasgar.saify@gmail.com',
     address: 'Near Old Bus Stand, Pulgaon, Maharashtra - 442302',
     footerDescription: "Pulgaon's trusted wholesale and retail hardware, plumbing, and machinery store since 2019.",
