@@ -15,6 +15,7 @@ const carouselItems = [
           }}
           alt="Texmo Pipes and Products Limited" 
           className="w-full h-full object-contain drop-shadow-sm"
+          loading="lazy"
         />
       </div>
     )

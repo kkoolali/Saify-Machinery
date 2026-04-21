@@ -13,8 +13,71 @@ export default function Contact() {
     message: ''
   });
 
+  const [errors, setErrors] = useState({
+    name: '',
+    phone: '',
+    message: ''
+  });
+
+  const [touched, setTouched] = useState({
+    name: false,
+    phone: false,
+    message: false
+  });
+
+  const validateField = (name: string, value: string) => {
+    switch (name) {
+      case 'name':
+        if (!value.trim()) return 'Name is required';
+        if (value.trim().length < 3) return 'Name must be at least 3 characters';
+        return '';
+      case 'phone':
+        if (!value.trim()) return 'Phone number is required';
+        const phoneRegex = /^[0-9+\s-]{10,}$/;
+        if (!phoneRegex.test(value.trim())) return 'Please enter a valid phone number (min 10 digits)';
+        return '';
+      case 'message':
+        if (!value.trim()) return 'Message is required';
+        if (value.trim().length < 10) return 'Message must be at least 10 characters';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    setErrors(prev => ({ ...prev, [name]: validateField(name, formData[name as keyof typeof formData]) }));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Only show validation error if the field was already touched
+    if (touched[name as keyof typeof touched]) {
+      setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Final validation check
+    const newErrors = {
+      name: validateField('name', formData.name),
+      phone: validateField('phone', formData.phone),
+      message: validateField('message', formData.message)
+    };
+    
+    setErrors(newErrors);
+    setTouched({ name: true, phone: true, message: true });
+
+    if (newErrors.name || newErrors.phone || newErrors.message) {
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -25,6 +88,8 @@ export default function Contact() {
       
       setIsSuccess(true);
       setFormData({ name: '', phone: '', message: '' });
+      setTouched({ name: false, phone: false, message: false });
+      setErrors({ name: '', phone: '', message: '' });
       
       // Reset success message after 5 seconds
       setTimeout(() => {
@@ -37,6 +102,10 @@ export default function Contact() {
       setIsSubmitting(false);
     }
   };
+
+  const isFormValid = !validateField('name', formData.name) && 
+                      !validateField('phone', formData.phone) && 
+                      !validateField('message', formData.message);
 
   return (
     <section id="contact" className="py-20 bg-gray-50">
@@ -137,13 +206,22 @@ export default function Contact() {
                     <input 
                       type="text" 
                       id="name" 
+                      name="name"
                       required
                       value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-4 py-3 rounded-lg border outline-none transition-all ${
+                        touched.name && errors.name 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                          : 'border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue'
+                      }`}
                       placeholder="John Doe"
                       disabled={isSubmitting}
                     />
+                    {touched.name && errors.name && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{errors.name}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -151,32 +229,50 @@ export default function Contact() {
                     <input 
                       type="tel" 
                       id="phone" 
+                      name="phone"
                       required
                       value={formData.phone}
-                      onChange={e => setFormData({...formData, phone: e.target.value})}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-4 py-3 rounded-lg border outline-none transition-all ${
+                        touched.phone && errors.phone 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                          : 'border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue'
+                      }`}
                       placeholder="+91 ...."
                       disabled={isSubmitting}
                     />
+                    {touched.phone && errors.phone && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{errors.phone}</p>
+                    )}
                   </div>
                   
                   <div>
                     <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">Message / Requirements</label>
                     <textarea 
                       id="message" 
+                      name="message"
                       rows={4}
                       required
                       value={formData.message}
-                      onChange={e => setFormData({...formData, message: e.target.value})}
-                      className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue outline-none transition-all resize-none"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`w-full px-4 py-3 rounded-lg border outline-none transition-all resize-none ${
+                        touched.message && errors.message 
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-200' 
+                          : 'border-gray-200 focus:ring-2 focus:ring-brand-blue focus:border-brand-blue'
+                      }`}
                       placeholder="Tell us what you need..."
                       disabled={isSubmitting}
                     ></textarea>
+                    {touched.message && errors.message && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{errors.message}</p>
+                    )}
                   </div>
                   
                   <button 
                     type="submit" 
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || (Object.values(touched).some(t => t) && !isFormValid)}
                     className="mt-auto w-full bg-brand-blue hover:bg-brand-blue-dark text-white font-medium py-3.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (

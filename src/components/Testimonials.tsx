@@ -101,6 +101,7 @@ export default function Testimonials() {
                   src={review.avatar} 
                   alt={review.name} 
                   className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
+                  loading="lazy"
                 />
                 <div>
                   <h4 className="font-bold text-gray-900">{review.name}</h4>

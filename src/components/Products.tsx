@@ -253,6 +253,7 @@ export default function Products() {
                     transition={{ duration: 0.3 }}
                     className="w-full h-full md:absolute inset-0 object-cover"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                   />
                 </AnimatePresence>
 

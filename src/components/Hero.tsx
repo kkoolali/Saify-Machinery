@@ -11,6 +11,7 @@ export default function Hero() {
           alt="Industrial equipment and pipes"
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
+          loading="lazy"
         />
         <div className="absolute inset-0 bg-brand-blue-dark/80 bg-gradient-to-r from-brand-blue-dark/95 to-brand-blue/60 mix-blend-multiply"></div>
       </div>

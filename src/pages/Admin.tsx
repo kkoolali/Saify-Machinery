@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { login, logout } from '../lib/firebase';
-import { motion } from 'motion/react';
-import { LayoutDashboard, ShoppingBag, MessageSquare, Star, Settings, LogOut, LogIn, ChevronRight, Menu, X, ArrowLeft } from 'lucide-react';
+import { logout } from '../lib/firebase';
+import { LayoutDashboard, ShoppingBag, MessageSquare, Star, Settings, LogOut, ChevronRight } from 'lucide-react';
 
-// Subcomponents for different sections
+// Subcomponents
+import Login from './Admin/Login';
+import AccessDenied from './Admin/AccessDenied';
 import ManageProducts from './Admin/ManageProducts';
 import ManageInquiries from './Admin/ManageInquiries';
 import ManageTestimonials from './Admin/ManageTestimonials';
@@ -22,52 +23,17 @@ const Admin: React.FC = () => {
     );
   }
 
+  // State 1: Not Logged In
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-blue-50 text-brand-blue rounded-full flex items-center justify-center mx-auto mb-6">
-            <LayoutDashboard size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Saify Machinery Admin</h1>
-          <p className="text-gray-600 mb-8">Please sign in with your authorized Google account to manage your store.</p>
-          <button
-            onClick={login}
-            className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl"
-          >
-            <LogIn size={20} />
-            Sign In with Google
-          </button>
-          <a href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-brand-orange transition-colors mt-6 font-medium text-sm">
-            <ArrowLeft size={16} />
-            Back to Public Website
-          </a>
-        </div>
-      </div>
-    );
+    return <Login />;
   }
 
+  // State 2: Logged In but Not Admin
   if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <X size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-8">Your account ({user.email}) is not authorized for administrative access. Contact the administrator if this is an error.</p>
-          <button
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-bold transition-all shadow-sm"
-          >
-            <LogOut size={20} />
-            Sign Out
-          </button>
-        </div>
-      </div>
-    );
+    return <AccessDenied email={user.email} />;
   }
 
+  // State 3: Logged In & Admin (Dashboard)
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'products', label: 'Products', icon: ShoppingBag },

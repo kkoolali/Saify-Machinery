@@ -29,6 +29,7 @@ export default function About() {
               alt="Hardware Store Experience"
               className="w-full h-[500px] object-cover"
               referrerPolicy="no-referrer"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent flex flex-col justify-end p-8">
               <p className="text-white text-xl font-medium mb-2">Owner: Aliasgar Hakimuddin Saify</p>
