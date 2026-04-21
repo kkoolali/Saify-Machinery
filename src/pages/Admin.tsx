@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { logout } from '../lib/firebase';
+import { logout, db } from '../lib/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { LayoutDashboard, ShoppingBag, MessageSquare, Star, Settings, LogOut, ChevronRight } from 'lucide-react';
 
 // Subcomponents
@@ -14,6 +15,43 @@ const Admin: React.FC = () => {
   const { user, isAdmin, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'inquiries' | 'testimonials' | 'settings'>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  // Stats State
+  const [stats, setStats] = useState({
+    products: 0,
+    inquiries: 0,
+    testimonials: 0,
+    rating: 4.8
+  });
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const unsubCategories = onSnapshot(collection(db, 'categories'), (snapshot) => {
+      let totalItems = 0;
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (Array.isArray(data.items)) {
+          totalItems += data.items.length;
+        }
+      });
+      setStats(prev => ({ ...prev, products: totalItems }));
+    });
+
+    const unsubInquiries = onSnapshot(collection(db, 'inquiries'), (snapshot) => {
+      setStats(prev => ({ ...prev, inquiries: snapshot.size }));
+    });
+
+    const unsubTestimonials = onSnapshot(collection(db, 'testimonials'), (snapshot) => {
+      setStats(prev => ({ ...prev, testimonials: snapshot.size }));
+    });
+
+    return () => {
+      unsubCategories();
+      unsubInquiries();
+      unsubTestimonials();
+    };
+  }, [isAdmin]);
 
   if (loading) {
     return (
@@ -122,19 +160,19 @@ const Admin: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                   <p className="text-sm font-medium text-gray-500 mb-1">Total Categories</p>
-                  <p className="text-3xl font-bold text-gray-900">4</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.products}</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                   <p className="text-sm font-medium text-gray-500 mb-1">New Inquiries</p>
-                  <p className="text-3xl font-bold text-gray-900">0</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.inquiries}</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                   <p className="text-sm font-medium text-gray-500 mb-1">Verified Testimonials</p>
-                  <p className="text-3xl font-bold text-gray-900">3</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.testimonials}</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                   <p className="text-sm font-medium text-gray-500 mb-1">GMB Rating</p>
-                  <p className="text-3xl font-bold text-gray-900">4.8/5</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.rating}/5</p>
                 </div>
               </div>
 
