@@ -65,7 +65,55 @@ service cloud.firestore {
              data.createdAt == request.time;
     }
 
+    function isValidBrand(data) {
+      return data.name is string && data.name.size() <= 128 &&
+             data.logo is string && data.logo.size() <= 1024 &&
+             (!('website' in data) || (data.website is string && data.website.size() <= 512));
+    }
+
+    function isValidSiteConfig(id, data) {
+      return (id == 'global' && 
+               data.storeName is string && data.storeName.size() <= 128 &&
+               data.gstNumber is string && data.gstNumber.size() <= 64 &&
+               data.phone is string && data.phone.size() <= 32 &&
+               data.whatsapp is string && data.whatsapp.size() <= 32 &&
+               data.email is string && data.email.size() <= 128 &&
+               data.address is string && data.address.size() <= 512 &&
+               data.footerDescription is string && data.footerDescription.size() <= 1000 &&
+               data.socials is map &&
+               data.socials.get('facebook', '') is string && data.socials.get('facebook', '').size() <= 512 &&
+               data.socials.get('instagram', '') is string && data.socials.get('instagram', '').size() <= 512 &&
+               data.socials.get('youtube', '') is string && data.socials.get('youtube', '').size() <= 512
+             ) ||
+             (id == 'hero' && 
+               data.title is string && data.title.size() <= 256 &&
+               data.description is string && data.description.size() <= 1000 &&
+               data.backgroundImage is string && data.backgroundImage.size() <= 1024 &&
+               data.ctaText is string && data.ctaText.size() <= 64 &&
+               data.badgeText is string && data.badgeText.size() <= 256
+             ) ||
+             (id == 'about' && 
+               data.badge is string && data.badge.size() <= 128 &&
+               data.title is string && data.title.size() <= 256 &&
+               data.description is string && data.description.size() <= 2000 &&
+               data.experienceTitle is string && data.experienceTitle.size() <= 256 &&
+               data.experienceDescription is string && data.experienceDescription.size() <= 2000 &&
+               data.image is string && data.image.size() <= 1024 &&
+               data.ownerName is string && data.ownerName.size() <= 128
+             );
+    }
+
     // --- Match Rules ---
+
+    match /site_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSiteConfig(configId, incoming()) && isValidId(configId);
+    }
+
+    match /brands/{brandId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidBrand(incoming()) && isValidId(brandId);
+    }
 
     match /categories/{categoryId} {
       allow read: if true;
