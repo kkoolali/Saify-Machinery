@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { 
   Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, 
-  Cog, Construction, CheckCircle2, Loader2, ChevronLeft, ChevronRight, X, ImageIcon 
+  Cog, Construction, CheckCircle2, Loader2, ChevronLeft, ChevronRight, X, ImageIcon,
+  Search, ArrowUpDown, Filter, SlidersHorizontal
 } from 'lucide-react';
 
 const iconMap: Record<string, any> = { 
@@ -86,6 +87,8 @@ const localCategories = [
 export default function Products() {
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('default');
   
   // Modal & Carousel State
   const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
@@ -112,6 +115,24 @@ export default function Products() {
 
     return unsubscribe;
   }, []);
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = products.filter(p => 
+      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.items.some((item: string) => item.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    if (sortBy === 'name-asc') {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'name-desc') {
+      result.sort((a, b) => b.title.localeCompare(a.title));
+    } else if (sortBy === 'popularity') {
+      // Use items count as a proxy for popularity/depth
+      result.sort((a, b) => (b.items?.length || 0) - (a.items?.length || 0));
+    }
+
+    return result;
+  }, [products, searchTerm, sortBy]);
 
   // Keyboard navigation for the modal carousel
   useEffect(() => {
@@ -162,6 +183,37 @@ export default function Products() {
           </p>
         </div>
 
+        {/* Filter & Sort Bar */}
+        <div className="mb-12 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+          <div className="relative w-full md:w-96 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-orange transition-colors" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search products or categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white border border-gray-200 rounded-xl py-3 pl-11 pr-4 outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all text-sm"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 text-gray-500 text-sm font-bold uppercase tracking-wider shrink-0">
+              <SlidersHorizontal size={16} />
+              <span>Sort:</span>
+            </div>
+            <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="bg-white border border-gray-200 rounded-xl py-2.5 px-4 outline-none focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all text-sm font-medium cursor-pointer flex-grow md:flex-grow-0"
+            >
+              <option value="default">Default Order</option>
+              <option value="name-asc">Name (A-Z)</option>
+              <option value="name-desc">Name (Z-A)</option>
+              <option value="popularity">Popularity (Most Products)</option>
+            </select>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map((i) => (
@@ -180,42 +232,60 @@ export default function Products() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.map((category, index) => {
-              const Icon = category.icon;
-              return (
-                <motion.div
-                  key={category.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  onClick={() => openModal(category)}
-                  className="bg-white border text-left border-gray-100 flex flex-col rounded-2xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all hover:border-brand-blue/30 group cursor-pointer relative overflow-hidden"
-                >
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 ${category.color}`}>
-                    <Icon size={28} />
-                  </div>
-                  
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">{category.title}</h4>
-                  
-                  <ul className="space-y-3 mb-6 relative z-10 flex-grow">
-                    {category.items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-gray-600">
-                        <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
-                        <span className="text-sm">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+          <>
+            {filteredAndSortedProducts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {filteredAndSortedProducts.map((category, index) => {
+                  const Icon = category.icon;
+                  return (
+                    <motion.div
+                      key={category.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      onClick={() => openModal(category)}
+                      className="bg-white border text-left border-gray-100 flex flex-col rounded-2xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all hover:border-brand-blue/30 group cursor-pointer relative overflow-hidden h-full"
+                    >
+                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 ${category.color}`}>
+                        <Icon size={28} />
+                      </div>
+                      
+                      <h4 className="text-xl font-bold text-gray-900 mb-4">{category.title}</h4>
+                      
+                      <ul className="space-y-3 mb-6 relative z-10 flex-grow">
+                        {category.items.map((item: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-gray-600">
+                            <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
+                            <span className="text-sm">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
 
-                  <div className="mt-auto pt-4 border-t border-gray-50 flex items-center gap-2 text-brand-orange font-medium text-sm group-hover:text-brand-orange-light transition-colors relative z-10">
-                    <ImageIcon size={18} />
-                    View Image Gallery
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center gap-2 text-brand-orange font-medium text-sm group-hover:text-brand-orange-light transition-colors relative z-10">
+                        <ImageIcon size={18} />
+                        View Image Gallery
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                  <Filter className="text-gray-400" size={32} />
+                </div>
+                <h4 className="text-2xl font-bold text-gray-900 mb-2">No results found</h4>
+                <p className="text-gray-500">Try adjusting your search or filters to find what you're looking for.</p>
+                <button 
+                  onClick={() => { setSearchTerm(''); setSortBy('default'); }}
+                  className="mt-6 text-brand-orange font-bold hover:underline"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         <div className="mt-16 text-center">
