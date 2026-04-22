@@ -167,7 +167,7 @@ const ManageProducts: React.FC = () => {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold">Manage Product Catalog</h3>
+        <h3 className="text-xl font-bold italic text-brand-blue">Manage Catalog Categories</h3>
         {!isAdding && (
           <button 
             onClick={() => setIsAdding(true)}
@@ -347,17 +347,17 @@ const ManageProducts: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-3">
                 <button 
                   onClick={() => handleEdit(cat)}
-                  className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                  className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all shadow-sm active:scale-95"
                   title="Edit Category"
                 >
                   <Edit2 size={20} />
                 </button>
                 <button 
                   onClick={() => handleDelete(cat.docId)}
-                  className="p-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
+                  className="p-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all shadow-sm active:scale-95"
                   title="Delete Category"
                 >
                   <Trash2 size={20} />

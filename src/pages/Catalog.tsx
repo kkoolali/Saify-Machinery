@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
 import Header from '../components/Header';
@@ -20,18 +20,25 @@ interface Product {
     price?: string;
     imageUrl: string;
     images?: string[]; // Supporting multiple images
+    seoTitle?: string;
+    seoDescription?: string;
+    seoKeywords?: string;
     featured: boolean;
 }
 
 interface Category {
     id: string;
     title: string;
+    seoTitle?: string;
+    seoDescription?: string;
+    seoKeywords?: string;
 }
 
 export default function Catalog() {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [config, setConfig] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -56,13 +63,23 @@ export default function Catalog() {
     };
 
     useEffect(() => {
+        // Fetch Global Config for Header
+        getDoc(doc(db, 'site_config', 'global')).then(docSnap => {
+            if (docSnap.exists()) {
+                setConfig(docSnap.data());
+            }
+        });
+
         // Fetch Categories
         const unsubCats = onSnapshot(
             query(collection(db, 'categories'), orderBy('title')), 
             (snapshot) => {
                 setCategories(snapshot.docs.map(doc => ({ 
                     id: doc.data().id, 
-                    title: doc.data().title 
+                    title: doc.data().title,
+                    seoTitle: doc.data().seoTitle,
+                    seoDescription: doc.data().seoDescription,
+                    seoKeywords: doc.data().seoKeywords
                 })));
             },
             (error) => {
@@ -101,17 +118,63 @@ export default function Catalog() {
         });
     }, [products, searchTerm, selectedCategory]);
 
-    const activeCategoryTitle = categories.find(c => c.id === selectedCategory)?.title || 'All Products';
+    const activeCategory = categories.find(c => c.id === selectedCategory);
+    const activeCategoryTitle = activeCategory?.title || 'All Products';
 
     // Handle SEO Meta Tags
     useEffect(() => {
-        document.title = selectedCategory === 'all' 
-            ? 'Saify Machinery Catalog | All Products' 
-            : `${activeCategoryTitle} | Saify Machinery Catalog`;
+        // If a product is selected for Quick View, use its SEO info
+        if (selectedProduct) {
+            document.title = selectedProduct.seoTitle || `${selectedProduct.title} | Saify Machinery`;
+            
+            const metaDesc = document.querySelector('meta[name="description"]');
+            const desc = selectedProduct.seoDescription || selectedProduct.description.substring(0, 160);
+            metaDesc?.setAttribute('content', desc);
+
+            let keywordsMeta = document.querySelector('meta[name="keywords"]');
+            if (!keywordsMeta) {
+                keywordsMeta = document.createElement('meta');
+                keywordsMeta.setAttribute('name', 'keywords');
+                document.head.appendChild(keywordsMeta);
+            }
+            const keywords = selectedProduct.seoKeywords || 'machinery, hardware, ' + selectedProduct.title.toLowerCase();
+            keywordsMeta.setAttribute('content', keywords);
+
+            return; // Exit early if product is selected
+        }
+
+        // 1. Title
+        if (selectedCategory !== 'all' && activeCategory?.seoTitle) {
+            document.title = activeCategory.seoTitle;
+        } else {
+            document.title = selectedCategory === 'all' 
+                ? 'Saify Machinery Catalog | All Products' 
+                : `${activeCategoryTitle} | Saify Machinery Catalog`;
+        }
         
-        const description = `Browse our extensive collection of ${activeCategoryTitle.toLowerCase()} products. High-quality machinery and hardware available at Saify Machinery, Pulgaon.`;
-        document.querySelector('meta[name="description"]')?.setAttribute('content', description);
-    }, [selectedCategory, activeCategoryTitle]);
+        // 2. Description
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (selectedCategory !== 'all' && activeCategory?.seoDescription) {
+            metaDesc?.setAttribute('content', activeCategory.seoDescription);
+        } else {
+            const description = `Browse our extensive collection of ${activeCategoryTitle.toLowerCase()} products. High-quality machinery and hardware available at Saify Machinery, Pulgaon.`;
+            metaDesc?.setAttribute('content', description);
+        }
+
+        // 3. Keywords
+        let keywordsMeta = document.querySelector('meta[name="keywords"]');
+        if (!keywordsMeta) {
+            keywordsMeta = document.createElement('meta');
+            keywordsMeta.setAttribute('name', 'keywords');
+            document.head.appendChild(keywordsMeta);
+        }
+
+        if (selectedCategory !== 'all' && activeCategory?.seoKeywords) {
+            keywordsMeta.setAttribute('content', activeCategory.seoKeywords);
+        } else {
+            keywordsMeta.setAttribute('content', 'machinery, hardware, tools, pulgaon, saify machinery, industrial equipment');
+        }
+    }, [selectedCategory, activeCategory, activeCategoryTitle, selectedProduct]);
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -123,8 +186,12 @@ export default function Catalog() {
                 <div className="container mx-auto px-4 md:px-6 relative z-10">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="max-w-2xl">
-                            <h1 className="text-4xl md:text-5xl font-heading font-black italic mb-4">Saify Catalog</h1>
-                            <p className="text-gray-300 text-lg">Explore our extensive range of machinery, hardware, and industrial solutions. Quality equipment for every project in Pulgaon.</p>
+                            <h1 className="text-4xl md:text-5xl font-heading font-black italic mb-4">
+                                {config?.catalogHeaderTitle || 'Saify Catalog'}
+                            </h1>
+                            <p className="text-gray-300 text-lg">
+                                {config?.catalogHeaderSubtitle || 'Explore our extensive range of machinery, hardware, and industrial solutions. Quality equipment for every project in Pulgaon.'}
+                            </p>
                         </div>
                         <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                             <div className="w-12 h-12 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg shadow-brand-orange/20">

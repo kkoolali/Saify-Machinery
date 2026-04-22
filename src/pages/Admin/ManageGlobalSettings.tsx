@@ -15,6 +15,8 @@ const ManageGlobalSettings: React.FC = () => {
     email: 'aliasgar.saify@gmail.com',
     address: 'Near Old Bus Stand, Pulgaon, Maharashtra - 442302',
     footerDescription: "Pulgaon's trusted wholesale and retail hardware, plumbing, and machinery store since 2019.",
+    catalogHeaderTitle: 'Saify Catalog',
+    catalogHeaderSubtitle: 'Explore our extensive range of machinery, hardware, and industrial solutions. Quality equipment for every project in Pulgaon.',
     socials: {
       facebook: '',
       instagram: '',
@@ -100,6 +102,18 @@ const ManageGlobalSettings: React.FC = () => {
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Short Description</label>
               <textarea required rows={3} value={formData.footerDescription} onChange={e => setFormData({...formData, footerDescription: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-orange resize-none" />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-bold text-gray-900 border-l-4 border-brand-blue pl-3">Catalog Page Content</h4>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Main Heading</label>
+              <input required value={formData.catalogHeaderTitle || ''} onChange={e => setFormData({...formData, catalogHeaderTitle: e.target.value})} type="text" className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-orange" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Subheading</label>
+              <textarea required rows={3} value={formData.catalogHeaderSubtitle || ''} onChange={e => setFormData({...formData, catalogHeaderSubtitle: e.target.value})} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-orange resize-none" />
             </div>
           </div>
 

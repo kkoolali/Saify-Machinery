@@ -15,6 +15,9 @@ interface Product {
   price?: string;
   imageUrl: string;
   images?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
   featured: boolean;
   createdAt: any;
 }
@@ -44,6 +47,9 @@ const ManageIndividualProducts: React.FC = () => {
     price: '',
     imageUrl: '',
     images: [] as string[],
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
     featured: false
   });
 
@@ -138,7 +144,8 @@ const ManageIndividualProducts: React.FC = () => {
         setIsAdding(false);
       }
       setFormData({ 
-        title: '', description: '', categoryId: '', price: '', imageUrl: '', images: [], featured: false 
+        title: '', description: '', categoryId: '', price: '', imageUrl: '', images: [], 
+        seoTitle: '', seoDescription: '', seoKeywords: '', featured: false 
       });
     } catch (error) {
       console.error("Error saving product:", error);
@@ -154,6 +161,9 @@ const ManageIndividualProducts: React.FC = () => {
       price: prod.price || '',
       imageUrl: prod.imageUrl,
       images: prod.images || [],
+      seoTitle: prod.seoTitle || '',
+      seoDescription: prod.seoDescription || '',
+      seoKeywords: prod.seoKeywords || '',
       featured: prod.featured || false
     });
     setEditingId(prod.id);
@@ -182,7 +192,7 @@ const ManageIndividualProducts: React.FC = () => {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h3 className="text-xl font-bold">Unlimited Product Manager</h3>
+            <h3 className="text-xl font-bold italic text-brand-orange">Manage Catalog Products</h3>
             <p className="text-sm text-gray-500">Upload individual items to your main product page.</p>
         </div>
         {!isAdding && (
@@ -310,6 +320,28 @@ const ManageIndividualProducts: React.FC = () => {
                 <textarea required rows={4} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Describe product features, power, durability, etc." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all resize-none" />
               </div>
 
+              {/* SEO Meta Fields */}
+              <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Search size={18} className="text-brand-blue" />
+                  <label className="text-sm font-bold text-brand-blue uppercase tracking-wider">SEO Configuration (Search Engines)</label>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <input value={formData.seoTitle} onChange={e => setFormData({...formData, seoTitle: e.target.value})} type="text" placeholder="Meta Title (Optional)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm" />
+                    <p className="text-[10px] text-gray-400 ml-1">Ideal: 50-60 characters</p>
+                  </div>
+                  <div className="space-y-1">
+                    <input value={formData.seoKeywords} onChange={e => setFormData({...formData, seoKeywords: e.target.value})} type="text" placeholder="Meta Keywords (Comma separated)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm" />
+                    <p className="text-[10px] text-gray-400 ml-1">E.g.: pumps, wardha hardware, motor</p>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-1">
+                  <textarea rows={2} value={formData.seoDescription} onChange={e => setFormData({...formData, seoDescription: e.target.value})} placeholder="Meta Description (Optional)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all resize-none text-sm" />
+                  <p className="text-[10px] text-gray-400 ml-1">Ideal: 150-160 characters</p>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
                 <button type="button" onClick={() => { setIsAdding(false); setEditingId(null); }} className="px-6 py-2 text-gray-400 font-bold hover:text-gray-600 transition-colors">Cancel</button>
                 <button 
@@ -389,9 +421,21 @@ const ManageIndividualProducts: React.FC = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleEdit(prod)} className="p-2 text-brand-blue hover:bg-brand-blue/5 rounded-lg transition-colors"><Edit2 size={16} /></button>
-                        <button onClick={() => handleDelete(prod.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => handleEdit(prod)} 
+                          className="p-2 text-brand-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-all active:scale-95 shadow-sm"
+                          title="Edit Product"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(prod.id)} 
+                          className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-all active:scale-95 shadow-sm"
+                          title="Delete Product"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
