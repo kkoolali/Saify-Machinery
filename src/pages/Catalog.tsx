@@ -9,7 +9,7 @@ import {
     Search, Filter, Package, ChevronRight, Tag, 
     ArrowRight, ShoppingBag, Grid, List as ListIcon,
     Loader2, Phone, MessageSquare, Maximize2, X, Eye,
-    ZoomIn, ZoomOut, ChevronLeft, Play
+    ZoomIn, ZoomOut, ChevronLeft, Play, Share2, Check
 } from 'lucide-react';
 
 interface Product {
@@ -46,6 +46,7 @@ export default function Catalog() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [copied, setCopied] = useState(false);
     const [isZoomed, setIsZoomed] = useState(false);
     const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
@@ -762,17 +763,25 @@ export default function Catalog() {
                                         </a>
                                         <button 
                                             onClick={() => {
+                                                const shareData = {
+                                                    title: selectedProduct.title,
+                                                    text: `Check out ${selectedProduct.title} at Saify Machinery!`,
+                                                    url: window.location.href
+                                                };
                                                 if (navigator.share) {
-                                                    navigator.share({
-                                                        title: selectedProduct.title,
-                                                        text: `Check out ${selectedProduct.title} at Saify Machinery!`,
-                                                        url: window.location.href
-                                                    });
+                                                    navigator.share(shareData).catch(() => {});
+                                                } else {
+                                                    navigator.clipboard.writeText(window.location.href);
+                                                    setCopied(true);
+                                                    setTimeout(() => setCopied(false), 2000);
                                                 }
                                             }}
-                                            className="py-4 bg-white text-gray-500 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest border border-gray-200 hover:bg-gray-50 hover:shadow-xl transition-all"
+                                            className={`py-4 rounded-[1.25rem] font-black text-[10px] uppercase tracking-widest border transition-all flex items-center justify-center gap-2
+                                                ${copied ? 'bg-green-50 border-green-200 text-green-600' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50 hover:shadow-xl'}
+                                            `}
                                         >
-                                            Share Data
+                                            {copied ? <Check size={14} /> : <Share2 size={14} />}
+                                            {copied ? 'Link Copied' : 'Share Product'}
                                         </button>
                                     </div>
                                 </div>
