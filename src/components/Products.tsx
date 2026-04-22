@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
 import { db } from '../lib/firebase';
 import { 
   Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, 
   Cog, Construction, CheckCircle2, Loader2, ChevronLeft, ChevronRight, X, ImageIcon,
-  Search, ArrowUpDown, Filter, SlidersHorizontal
+  Search, ArrowUpDown, Filter, SlidersHorizontal, ShoppingBag
 } from 'lucide-react';
 
 const iconMap: Record<string, any> = { 
@@ -326,10 +327,17 @@ export default function Products() {
           </>
         )}
 
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Link
+            to="/products"
+            className="inline-flex items-center justify-center bg-brand-orange hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-black italic transition-all shadow-lg shadow-orange-100 hover:-translate-y-1"
+          >
+            <ShoppingBag className="mr-2" size={20} />
+            View Full Catalog
+          </Link>
           <a
             href="#contact"
-            className="inline-flex items-center justify-center bg-gray-900 hover:bg-brand-blue text-white px-8 py-4 rounded-lg font-medium transition-colors cursor-pointer shadow-lg"
+            className="inline-flex items-center justify-center bg-gray-900 hover:bg-brand-blue text-white px-8 py-4 rounded-xl font-medium transition-colors cursor-pointer shadow-lg"
           >
             Inquire For Bulk Orders
           </a>

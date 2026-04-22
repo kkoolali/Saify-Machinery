@@ -15,16 +15,18 @@ import ManageAbout from './Admin/ManageAbout';
 import ManageFeaturedProducts from './Admin/ManageFeaturedProducts';
 import ManageBrands from './Admin/ManageBrands';
 import ManageGlobalSettings from './Admin/ManageGlobalSettings';
+import ManageIndividualProducts from './Admin/ManageIndividualProducts';
 
 const Admin: React.FC = () => {
   const { user, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'hero' | 'about' | 'products' | 'featured' | 'testimonials' | 'brands' | 'inquiries' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'hero' | 'about' | 'products' | 'catalog' | 'featured' | 'testimonials' | 'brands' | 'inquiries' | 'settings'>('dashboard');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Stats State
   const [stats, setStats] = useState({
     products: 0,
+    catalog: 0,
     inquiries: 0,
     testimonials: 0,
     rating: 4.8
@@ -44,6 +46,10 @@ const Admin: React.FC = () => {
       setStats(prev => ({ ...prev, products: totalItems }));
     });
 
+    const unsubCatalog = onSnapshot(collection(db, 'products'), (snapshot) => {
+      setStats(prev => ({ ...prev, catalog: snapshot.size }));
+    });
+
     const unsubInquiries = onSnapshot(collection(db, 'inquiries'), (snapshot) => {
       setStats(prev => ({ ...prev, inquiries: snapshot.size }));
     });
@@ -54,6 +60,7 @@ const Admin: React.FC = () => {
 
     return () => {
       unsubCategories();
+      unsubCatalog();
       unsubInquiries();
       unsubTestimonials();
     };
@@ -83,7 +90,8 @@ const Admin: React.FC = () => {
     { id: 'hero', label: 'Hero Section', icon: Layout, group: 'Pages' },
     { id: 'about', label: 'About Us', icon: BookOpen, group: 'Pages' },
     { id: 'featured', label: 'Featured Grid', icon: Award, group: 'Pages' },
-    { id: 'products', label: 'Product Catalog', icon: ShoppingBag, group: 'Inventory' },
+    { id: 'products', label: 'Category Groups', icon: BookOpen, group: 'Inventory' },
+    { id: 'catalog', label: 'Catalog Items', icon: ShoppingBag, group: 'Inventory' },
     { id: 'brands', label: 'Brand Logos', icon: Globe, group: 'Inventory' },
     { id: 'inquiries', label: 'Customer Messages', icon: MessageSquare, group: 'CRM' },
     { id: 'testimonials', label: 'Reviews', icon: Star, group: 'CRM' },
@@ -228,11 +236,11 @@ const Admin: React.FC = () => {
                   Your digital storefront is live and growing. Use the links below or the sidebar to keep your details updated for your customers in Pulgaon.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8">
-                    <button onClick={() => setActiveTab('products')} className="w-full sm:w-auto px-6 md:px-8 py-3 bg-brand-orange text-white rounded-2xl font-black italic shadow-lg shadow-brand-orange/20 hover:translate-y-[-2px] transition-all text-sm md:text-base">
+                    <button onClick={() => setActiveTab('catalog')} className="w-full sm:w-auto px-6 md:px-8 py-3 bg-brand-orange text-white rounded-2xl font-black italic shadow-lg shadow-brand-orange/20 hover:translate-y-[-2px] transition-all text-sm md:text-base">
                       Update Catalog
                     </button>
-                    <button onClick={() => setActiveTab('hero')} className="w-full sm:w-auto px-6 md:px-8 py-3 bg-brand-blue text-white rounded-2xl font-black italic shadow-lg shadow-brand-blue/20 hover:translate-y-[-2px] transition-all text-sm md:text-base">
-                      Design Homepage
+                    <button onClick={() => setActiveTab('products')} className="w-full sm:w-auto px-6 md:px-8 py-3 bg-brand-blue text-white rounded-2xl font-black italic shadow-lg shadow-brand-blue/20 hover:translate-y-[-2px] transition-all text-sm md:text-base">
+                      Manage Categories
                     </button>
                 </div>
               </div>
@@ -243,17 +251,17 @@ const Admin: React.FC = () => {
                       <ShoppingBag size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Products</p>
-                    <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{stats.products}</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Catalog Items</p>
+                    <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{stats.catalog}</p>
                   </div>
                 </div>
                 <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-brand-blue/30 transition-colors group flex items-center md:items-start md:flex-col gap-4 md:gap-0">
                   <div className="w-12 h-12 md:w-10 md:h-10 rounded-xl bg-blue-50 text-brand-blue flex items-center justify-center md:mb-4 group-hover:scale-110 transition-transform shrink-0">
-                      <MessageSquare size={20} />
+                      <BookOpen size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">New Inquiries</p>
-                    <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{stats.inquiries}</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Category Products</p>
+                    <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{stats.products}</p>
                   </div>
                 </div>
                 <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-yellow-500/30 transition-colors group flex items-center md:items-start md:flex-col gap-4 md:gap-0">
@@ -267,11 +275,11 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-green-500/30 transition-colors group flex items-center md:items-start md:flex-col gap-4 md:gap-0">
                   <div className="w-12 h-12 md:w-10 md:h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center md:mb-4 group-hover:scale-110 transition-transform shrink-0">
-                      <Award size={20} />
+                      <MessageSquare size={20} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">GMB Rating</p>
-                    <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{stats.rating}<span className="text-sm font-normal text-gray-400 ml-1">/5</span></p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">New Inquiries</p>
+                    <p className="text-2xl md:text-3xl font-black text-gray-900 leading-none">{stats.inquiries}</p>
                   </div>
                 </div>
               </div>
@@ -282,6 +290,7 @@ const Admin: React.FC = () => {
           {activeTab === 'about' && <ManageAbout />}
           {activeTab === 'featured' && <ManageFeaturedProducts />}
           {activeTab === 'products' && <ManageProducts />}
+          {activeTab === 'catalog' && <ManageIndividualProducts />}
           {activeTab === 'brands' && <ManageBrands />}
           {activeTab === 'inquiries' && <ManageInquiries />}
           {activeTab === 'testimonials' && <ManageTestimonials />}

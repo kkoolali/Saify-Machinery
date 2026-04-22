@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, Hammer, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,13 +17,29 @@ export default function Header() {
   }, []);
 
   const navLinks = [
-    { name: 'Home', href: '#home' },
-    { name: 'About', href: '#about' },
-    { name: 'Products', href: '#products' },
-    { name: 'Brands', href: '#brands' },
-    { name: 'Reviews', href: '#testimonials' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'Home', href: '/#home', type: 'hash' },
+    { name: 'About', href: '/#about', type: 'hash' },
+    { name: 'Products', href: '/products', type: 'link' },
+    { name: 'Brands', href: '/#brands', type: 'hash' },
+    { name: 'Reviews', href: '/#testimonials', type: 'hash' },
+    { name: 'Contact', href: '/#contact', type: 'hash' },
   ];
+
+  const LogoLink = () => (
+    <Link to="/" className="flex items-center gap-2">
+      <div className={`p-2 rounded-lg ${isScrolled ? 'bg-brand-blue text-white' : 'bg-white text-brand-blue'}`}>
+        <Hammer size={24} />
+      </div>
+      <div>
+        <h1 className={`font-heading font-bold text-xl leading-tight ${isScrolled ? 'text-brand-blue' : 'text-white'}`}>
+          Saify Machinery
+        </h1>
+        <p className={`text-xs font-medium tracking-wider uppercase ${isScrolled ? 'text-gray-500' : 'text-gray-300'}`}>
+          Est. 2019
+        </p>
+      </div>
+    </Link>
+  );
 
   return (
     <header
@@ -30,33 +48,32 @@ export default function Header() {
       }`}
     >
       <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
-        <a href="#home" className="flex items-center gap-2">
-          <div className={`p-2 rounded-lg ${isScrolled ? 'bg-brand-blue text-white' : 'bg-white text-brand-blue'}`}>
-            <Hammer size={24} />
-          </div>
-          <div>
-            <h1 className={`font-heading font-bold text-xl leading-tight ${isScrolled ? 'text-brand-blue' : 'text-white'}`}>
-              Saify Machinery
-            </h1>
-            <p className={`text-xs font-medium tracking-wider uppercase ${isScrolled ? 'text-gray-500' : 'text-gray-300'}`}>
-              Est. 2019
-            </p>
-          </div>
-        </a>
+        <LogoLink />
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
           <ul className="flex items-center gap-6">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a
-                  href={link.href}
-                  className={`text-sm font-medium hover:text-brand-orange transition-colors ${
-                    isScrolled ? 'text-gray-700' : 'text-gray-200'
-                  }`}
-                >
-                  {link.name}
-                </a>
+                {link.type === 'link' ? (
+                  <Link
+                    to={link.href}
+                    className={`text-sm font-medium hover:text-brand-orange transition-colors ${
+                      location.pathname === link.href ? 'text-brand-orange' : (isScrolled ? 'text-gray-700' : 'text-gray-200')
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                ) : (
+                  <a
+                    href={link.href}
+                    className={`text-sm font-medium hover:text-brand-orange transition-colors ${
+                      isScrolled ? 'text-gray-700' : 'text-gray-200'
+                    }`}
+                  >
+                    {link.name}
+                  </a>
+                )}
               </li>
             ))}
           </ul>
@@ -96,13 +113,23 @@ export default function Header() {
               <ul className="flex flex-col gap-2">
                 {navLinks.map((link) => (
                   <li key={link.name}>
-                    <a
-                      href={link.href}
-                      className="block py-3 px-4 rounded-lg hover:bg-gray-50 text-gray-800 font-medium transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {link.name}
-                    </a>
+                    {link.type === 'link' ? (
+                      <Link
+                        to={link.href}
+                        className="block py-3 px-4 rounded-lg hover:bg-gray-50 text-gray-800 font-medium transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {link.name}
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="block py-3 px-4 rounded-lg hover:bg-gray-50 text-gray-800 font-medium transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {link.name}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
