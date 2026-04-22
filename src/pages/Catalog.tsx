@@ -9,8 +9,10 @@ import {
     Search, Filter, Package, ChevronRight, Tag, 
     ArrowRight, ShoppingBag, Grid, List as ListIcon,
     Loader2, Phone, MessageSquare, Maximize2, X, Eye,
-    ZoomIn, ZoomOut, ChevronLeft, Play, Share2, Check
+    ZoomIn, ZoomOut, ChevronLeft, Play, Share2, Check,
+    ArrowLeftRight, Scale
 } from 'lucide-react';
+import { useCompare } from '../context/CompareContext';
 
 interface Product {
     id: string;
@@ -50,6 +52,13 @@ export default function Catalog() {
     const [copied, setCopied] = useState(false);
     const [isZoomed, setIsZoomed] = useState(false);
     const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+    const { 
+        compareList, 
+        toggleCompare, 
+        clearCompare, 
+        showCompareModal, 
+        setShowCompareModal 
+    } = useCompare();
 
     useEffect(() => {
         if (!selectedProduct) {
@@ -444,13 +453,29 @@ export default function Catalog() {
                                                             />
                                                             
                                                             {/* Badges Overlay */}
-                                                            <div className="absolute top-4 left-4 flex flex-col gap-2">
+                                                            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                                                                 {prod.featured && (
                                                                     <div className="bg-brand-orange text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-xl shadow-brand-orange/30">
                                                                         Top Pick
                                                                     </div>
                                                                 )}
                                                             </div>
+
+                                                            {/* Compare Toggle */}
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    toggleCompare(prod);
+                                                                }}
+                                                                className={`absolute top-4 right-4 z-10 p-2.5 rounded-xl border-2 transition-all flex items-center justify-center
+                                                                    ${compareList.find(p => p.id === prod.id) 
+                                                                        ? 'bg-brand-blue border-brand-blue text-white' 
+                                                                        : 'bg-white/80 border-white/50 text-gray-500 hover:border-brand-blue/50 hover:text-brand-blue backdrop-blur-md'}
+                                                                `}
+                                                                title="Compare Product"
+                                                            >
+                                                                <ArrowLeftRight size={16} />
+                                                            </button>
 
                                                             {/* Quick Action Overlay */}
                                                             <div className="absolute inset-0 bg-brand-blue-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">

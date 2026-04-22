@@ -1,8 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, ShoppingCart } from 'lucide-react';
+import { ArrowRight, ShoppingCart, ArrowLeftRight } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useCompare } from '../context/CompareContext';
+
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  categoryId: string;
+  price?: string;
+  imageUrl: string;
+  images?: string[];
+  videoUrl?: string;
+  videoTitle?: string;
+  featured: boolean;
+  enquiryOnly?: boolean;
+}
 
 const localFeaturedProducts = [
   {
@@ -26,6 +41,7 @@ const localFeaturedProducts = [
 export default function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { compareList, toggleCompare } = useCompare();
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'featured_products'), (snapshot) => {
@@ -76,6 +92,32 @@ export default function FeaturedProducts() {
                 <div className="absolute top-4 left-4 bg-brand-orange text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg -translate-x-12 group-hover:translate-x-0 transition-transform duration-500">
                   Featured
                 </div>
+
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Map featured product format to comparison product format
+                    const mappedProduct: Product = {
+                      id: product.id,
+                      title: product.title,
+                      description: product.description,
+                      imageUrl: product.image || product.imageUrl,
+                      categoryId: product.categoryId || 'featured',
+                      price: product.price,
+                      featured: true,
+                      enquiryOnly: product.enquiryOnly
+                    };
+                    toggleCompare(mappedProduct);
+                  }}
+                  className={`absolute top-4 right-4 z-10 p-2.5 rounded-xl border-2 transition-all flex items-center justify-center translate-x-12 group-hover:translate-x-0 duration-500
+                    ${compareList.find(p => p.id === product.id) 
+                      ? 'bg-brand-blue border-brand-blue text-white' 
+                      : 'bg-white/80 border-white/50 text-gray-500 hover:border-brand-blue/50 hover:text-brand-blue backdrop-blur-md'}
+                  `}
+                  title="Add to Compare"
+                >
+                  <ArrowLeftRight size={16} />
+                </button>
               </div>
               
               <div className="p-8 flex flex-col flex-grow">
@@ -95,6 +137,30 @@ export default function FeaturedProducts() {
                   </span>
                   <ArrowRight size={20} className="group-hover/btn:translate-x-1 transition-transform" />
                 </a>
+
+                <button
+                  onClick={() => {
+                    const mappedProduct: Product = {
+                      id: product.id,
+                      title: product.title,
+                      description: product.description,
+                      imageUrl: product.image || product.imageUrl,
+                      categoryId: product.categoryId || 'featured',
+                      price: product.price,
+                      featured: true,
+                      enquiryOnly: product.enquiryOnly
+                    };
+                    toggleCompare(mappedProduct);
+                  }}
+                  className={`mt-4 w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all border-2 flex items-center justify-center gap-3
+                    ${compareList.find(p => p.id === product.id)
+                      ? 'bg-brand-blue border-brand-blue text-white shadow-lg shadow-brand-blue/20'
+                      : 'bg-white border-gray-100 text-gray-500 hover:border-brand-blue hover:text-brand-blue shadow-sm'}
+                  `}
+                >
+                  <ArrowLeftRight size={14} />
+                  {compareList.find(p => p.id === product.id) ? 'Added to Compare' : 'Add to Compare'}
+                </button>
               </div>
             </motion.div>
           ))}
