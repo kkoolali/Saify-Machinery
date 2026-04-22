@@ -9,7 +9,7 @@ import {
     Search, Filter, Package, ChevronRight, Tag, 
     ArrowRight, ShoppingBag, Grid, List as ListIcon,
     Loader2, Phone, MessageSquare, Maximize2, X, Eye,
-    ZoomIn, ZoomOut, ChevronLeft
+    ZoomIn, ZoomOut, ChevronLeft, Play
 } from 'lucide-react';
 
 interface Product {
@@ -20,6 +20,8 @@ interface Product {
     price?: string;
     imageUrl: string;
     images?: string[]; // Supporting multiple images
+    videoUrl?: string; // Tutorial or Demo video URL
+    videoTitle?: string; // Title for the video section
     seoTitle?: string;
     seoDescription?: string;
     seoKeywords?: string;
@@ -572,31 +574,63 @@ export default function Catalog() {
                                     onMouseEnter={() => setIsZoomed(true)}
                                     onMouseLeave={() => setIsZoomed(false)}
                                 >
-                                    <motion.img 
-                                        key={activeImageIndex}
-                                        initial={{ opacity: 0, x: 20, filter: 'blur(10px)' }}
-                                        animate={{ 
-                                            opacity: 1,
-                                            filter: 'blur(0px)',
-                                            scale: isZoomed ? 2.5 : 1,
-                                            x: isZoomed ? `${50 - zoomPos.x}%` : 0,
-                                            y: isZoomed ? `${50 - zoomPos.y}%` : 0
-                                        }}
-                                        transition={{ 
-                                            opacity: { duration: 0.4 },
-                                            scale: { duration: 0.2 },
-                                            x: { duration: isZoomed ? 0 : 0.4 },
-                                            y: { duration: isZoomed ? 0 : 0.4 }
-                                        }}
-                                        src={[selectedProduct.imageUrl, ...(selectedProduct.images || [])][activeImageIndex]} 
-                                        alt={selectedProduct.title} 
-                                        className="w-full h-full object-contain p-12 md:p-20 drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)]"
-                                    />
+                                    <AnimatePresence mode="wait">
+                                        <motion.img 
+                                            key={activeImageIndex}
+                                            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                                            animate={{ 
+                                                opacity: 1,
+                                                scale: isZoomed ? 2.5 : 1,
+                                                filter: 'blur(0px)',
+                                                x: isZoomed ? `${50 - zoomPos.x}%` : 0,
+                                                y: isZoomed ? `${50 - zoomPos.y}%` : 0
+                                            }}
+                                            exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+                                            transition={{ 
+                                                opacity: { duration: 0.3 },
+                                                scale: { duration: 0.2 },
+                                                x: { duration: isZoomed ? 0 : 0.3 },
+                                                y: { duration: isZoomed ? 0 : 0.3 },
+                                                filter: { duration: 0.3 }
+                                            }}
+                                            src={[selectedProduct.imageUrl, ...(selectedProduct.images || [])][activeImageIndex]} 
+                                            alt={selectedProduct.title} 
+                                            className="w-full h-full object-contain p-12 md:p-20 drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)]"
+                                        />
+                                    </AnimatePresence>
+
+                                    {/* Navigation Arrows */}
+                                    {[selectedProduct.imageUrl, ...(selectedProduct.images || [])].length > 1 && (
+                                        <>
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const total = [selectedProduct.imageUrl, ...(selectedProduct.images || [])].length;
+                                                    setActiveImageIndex(prev => (prev - 1 + total) % total);
+                                                    setIsZoomed(false);
+                                                }}
+                                                className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-white/50 backdrop-blur-xl hover:bg-white rounded-2xl text-gray-900 shadow-xl border border-white/50 opacity-0 group-hover/gallery:opacity-100 transition-all z-20"
+                                            >
+                                                <ChevronLeft size={24} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const total = [selectedProduct.imageUrl, ...(selectedProduct.images || [])].length;
+                                                    setActiveImageIndex(prev => (prev + 1) % total);
+                                                    setIsZoomed(false);
+                                                }}
+                                                className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/50 backdrop-blur-xl hover:bg-white rounded-2xl text-gray-900 shadow-xl border border-white/50 opacity-0 group-hover/gallery:opacity-100 transition-all z-20"
+                                            >
+                                                <ChevronRight size={24} />
+                                            </button>
+                                        </>
+                                    )}
                                     
                                     {/* Zoom Status Badge */}
-                                    <div className="absolute bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-xl border border-gray-100 opacity-0 group-hover/gallery:opacity-100 transition-opacity whitespace-nowrap">
+                                    <div className="absolute bottom-10 right-10 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest shadow-xl border border-gray-100 opacity-0 group-hover/gallery:opacity-100 transition-opacity whitespace-nowrap z-30 pointer-events-none">
                                         <div className="w-1.5 h-1.5 rounded-full bg-brand-orange animate-pulse"></div>
-                                        {isZoomed ? 'Active Zoom Engine' : 'Hover to Inspect'}
+                                        {isZoomed ? 'Active Zoom Engine' : 'Hover over image to Zoom'}
                                     </div>
 
                                     {selectedProduct.featured && (
@@ -635,6 +669,12 @@ export default function Catalog() {
                                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                                             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Inventory</span>
                                         </div>
+                                        {selectedProduct.videoUrl && (
+                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-brand-orange/10 text-brand-orange rounded-full border border-brand-orange/20 animate-bounce-subtle">
+                                                <Play size={10} className="fill-brand-orange" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Video Guide</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <h2 className="text-4xl md:text-5xl font-heading font-black italic text-gray-900 leading-none tracking-tighter mb-6">
                                         {selectedProduct.title}
@@ -672,6 +712,36 @@ export default function Catalog() {
                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Warranty</p>
                                             <p className="text-2xl font-black font-mono tracking-tighter text-gray-900 group-hover:text-brand-orange transition-colors">Standard</p>
                                         </div>
+                                    </div>
+
+                                    {/* Video Tutorial Section */}
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                            <div className="w-6 h-[1px] bg-gray-200"></div> Video Support
+                                        </label>
+                                        {selectedProduct.videoUrl ? (
+                                            <div className="bg-black rounded-3xl overflow-hidden aspect-video relative group/video border-4 border-gray-100 shadow-xl">
+                                                <iframe 
+                                                    src={selectedProduct.videoUrl.replace('watch?v=', 'embed/').split('&')[0]} 
+                                                    className="w-full h-full"
+                                                    title={selectedProduct.videoTitle || 'Product Tutorial'}
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                />
+                                                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/10">
+                                                    <Play size={10} className="fill-white" />
+                                                    {selectedProduct.videoTitle || 'Technical Demonstration'}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-gray-50 rounded-3xl p-6 border border-dashed border-gray-200 flex flex-col items-center justify-center text-center">
+                                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                                    <Loader2 size={20} className="text-gray-300" />
+                                                </div>
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Video Guide Pending</p>
+                                                <p className="text-xs text-gray-500 max-w-[200px]">Request a custom installation or usage video via WhatsApp.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

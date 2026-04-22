@@ -4,7 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { 
   Plus, Edit2, Trash2, Save, X, ImageIcon, Loader2, Upload, 
-  Search, Filter, Tag, Package, AlertCircle
+  Search, Filter, Tag, Package, AlertCircle, Play
 } from 'lucide-react';
 
 interface Product {
@@ -15,6 +15,8 @@ interface Product {
   price?: string;
   imageUrl: string;
   images?: string[];
+  videoUrl?: string;
+  videoTitle?: string;
   seoTitle?: string;
   seoDescription?: string;
   seoKeywords?: string;
@@ -47,6 +49,8 @@ const ManageIndividualProducts: React.FC = () => {
     price: '',
     imageUrl: '',
     images: [] as string[],
+    videoUrl: '',
+    videoTitle: '',
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
@@ -145,6 +149,7 @@ const ManageIndividualProducts: React.FC = () => {
       }
       setFormData({ 
         title: '', description: '', categoryId: '', price: '', imageUrl: '', images: [], 
+        videoUrl: '', videoTitle: '',
         seoTitle: '', seoDescription: '', seoKeywords: '', featured: false 
       });
     } catch (error) {
@@ -161,6 +166,8 @@ const ManageIndividualProducts: React.FC = () => {
       price: prod.price || '',
       imageUrl: prod.imageUrl,
       images: prod.images || [],
+      videoUrl: prod.videoUrl || '',
+      videoTitle: prod.videoTitle || '',
       seoTitle: prod.seoTitle || '',
       seoDescription: prod.seoDescription || '',
       seoKeywords: prod.seoKeywords || '',
@@ -320,6 +327,24 @@ const ManageIndividualProducts: React.FC = () => {
                 <textarea required rows={4} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Describe product features, power, durability, etc." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all resize-none" />
               </div>
 
+              {/* Video Tutorial Section */}
+              <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Play size={18} className="text-brand-orange" />
+                  <label className="text-sm font-bold text-brand-orange uppercase tracking-wider">Technical Video Tutorial</label>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <input value={formData.videoTitle} onChange={e => setFormData({...formData, videoTitle: e.target.value})} type="text" placeholder="Video Title (e.g. Installation Guide)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
+                    <p className="text-[10px] text-gray-400 ml-1">E.g.: Usage Demonstration, Maintenance Tips</p>
+                  </div>
+                  <div className="space-y-1">
+                    <input value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} type="text" placeholder="Video URL (YouTube/Vimeo)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
+                    <p className="text-[10px] text-gray-400 ml-1">Paste the full link here</p>
+                  </div>
+                </div>
+              </div>
+
               {/* SEO Meta Fields */}
               <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -399,7 +424,10 @@ const ManageIndividualProducts: React.FC = () => {
                           <img src={prod.imageUrl} alt="" className="w-full h-full object-cover" />
                         </div>
                         <div>
-                          <h5 className="text-sm font-bold text-gray-900 group-hover:text-brand-orange transition-colors">{prod.title}</h5>
+                          <div className="flex items-center gap-2">
+                             <h5 className="text-sm font-bold text-gray-900 group-hover:text-brand-orange transition-colors">{prod.title}</h5>
+                             {prod.videoUrl && <Play size={12} className="text-brand-orange fill-brand-orange/20" />}
+                          </div>
                           <p className="text-xs text-gray-500 line-clamp-1 max-w-[200px]">{prod.description}</p>
                         </div>
                       </div>

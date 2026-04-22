@@ -9,6 +9,13 @@
   --color-brand-blue-dark: #062358;
   --color-brand-orange: #ff7f00;
   --color-brand-orange-light: #ff9933;
+  
+  --animate-bounce-subtle: bounce-subtle 3s infinite ease-in-out;
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
 }
 
 html {
