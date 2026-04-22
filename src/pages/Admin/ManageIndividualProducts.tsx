@@ -14,6 +14,7 @@ interface Product {
   categoryId: string;
   price?: string;
   imageUrl: string;
+  images?: string[];
   featured: boolean;
   createdAt: any;
 }
@@ -33,6 +34,7 @@ const ManageIndividualProducts: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const extraFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -41,6 +43,7 @@ const ManageIndividualProducts: React.FC = () => {
     categoryId: '',
     price: '',
     imageUrl: '',
+    images: [] as string[],
     featured: false
   });
 
@@ -87,6 +90,32 @@ const ManageIndividualProducts: React.FC = () => {
     }
   };
 
+  const handleExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const file = files[0];
+      const storageRef = ref(storage, `products/gallery/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+    } catch (error) {
+      console.error("Error uploading gallery image:", error);
+      alert("Failed to upload gallery image.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeExtraImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.imageUrl) {
@@ -109,7 +138,7 @@ const ManageIndividualProducts: React.FC = () => {
         setIsAdding(false);
       }
       setFormData({ 
-        title: '', description: '', categoryId: '', price: '', imageUrl: '', featured: false 
+        title: '', description: '', categoryId: '', price: '', imageUrl: '', images: [], featured: false 
       });
     } catch (error) {
       console.error("Error saving product:", error);
@@ -124,6 +153,7 @@ const ManageIndividualProducts: React.FC = () => {
       categoryId: prod.categoryId,
       price: prod.price || '',
       imageUrl: prod.imageUrl,
+      images: prod.images || [],
       featured: prod.featured || false
     });
     setEditingId(prod.id);
@@ -190,7 +220,7 @@ const ManageIndividualProducts: React.FC = () => {
                         <>
                             <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-sm">
-                                Change Image
+                                Change Main Image
                             </div>
                         </>
                     ) : (
@@ -200,12 +230,38 @@ const ManageIndividualProducts: React.FC = () => {
                             ) : (
                                 <Upload size={32} className="text-gray-300 mx-auto mb-2" />
                             )}
-                            <p className="text-sm font-medium text-gray-500">Tap to upload product photo</p>
-                            <p className="text-[10px] text-gray-400 mt-1">PNG, JPG up to 5MB</p>
+                            <p className="text-sm font-medium text-gray-500">Main Product Photo</p>
                         </div>
                     )}
                 </div>
                 <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+
+                {/* Additional Images */}
+                <div className="mt-6 space-y-3">
+                    <label className="text-xs font-black uppercase text-gray-400 tracking-wider">Gallery Images</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {formData.images.map((img, idx) => (
+                            <div key={idx} className="aspect-square relative rounded-lg overflow-hidden group border border-gray-100">
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                <button 
+                                    type="button"
+                                    onClick={() => removeExtraImage(idx)}
+                                    className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-inner"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        ))}
+                        <button 
+                            type="button"
+                            onClick={() => extraFileInputRef.current?.click()}
+                            className="aspect-square rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:border-brand-orange hover:text-brand-orange transition-all"
+                        >
+                            {isUploading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
+                        </button>
+                    </div>
+                    <input type="file" ref={extraFileInputRef} onChange={handleExtraUpload} accept="image/*" className="hidden" />
+                </div>
             </div>
 
             {/* Fields Section */}
