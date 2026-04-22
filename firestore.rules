@@ -102,7 +102,22 @@ service cloud.firestore {
              );
     }
 
+    function isValidIndividualProduct(data) {
+      return data.title is string && data.title.size() <= 256 &&
+             data.description is string && data.description.size() <= 5000 &&
+             data.categoryId is string && data.categoryId.size() <= 128 &&
+             data.imageUrl is string && data.imageUrl.size() <= 2048 &&
+             data.featured is bool &&
+             (!('price' in data) || (data.price is string && data.price.size() <= 128)) &&
+             (data.updatedAt is number);
+    }
+
     // --- Match Rules ---
+
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidIndividualProduct(incoming()) && isValidId(productId);
+    }
 
     match /site_config/{configId} {
       allow read: if true;

@@ -36,21 +36,34 @@ export default function Catalog() {
 
     useEffect(() => {
         // Fetch Categories
-        const unsubCats = onSnapshot(query(collection(db, 'categories'), orderBy('title')), (snapshot) => {
-            setCategories(snapshot.docs.map(doc => ({ 
-                id: doc.data().id, 
-                title: doc.data().title 
-            })));
-        });
+        const unsubCats = onSnapshot(
+            query(collection(db, 'categories'), orderBy('title')), 
+            (snapshot) => {
+                setCategories(snapshot.docs.map(doc => ({ 
+                    id: doc.data().id, 
+                    title: doc.data().title 
+                })));
+            },
+            (error) => {
+                console.error("Error fetching categories:", error);
+            }
+        );
 
         // Fetch Products
-        const unsubProds = onSnapshot(query(collection(db, 'products'), orderBy('createdAt', 'desc')), (snapshot) => {
-            setProducts(snapshot.docs.map(doc => ({
-                ...doc.data(),
-                id: doc.id
-            })) as Product[]);
-            setLoading(false);
-        });
+        const unsubProds = onSnapshot(
+            query(collection(db, 'products'), orderBy('updatedAt', 'desc')), 
+            (snapshot) => {
+                setProducts(snapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    id: doc.id
+                })) as Product[]);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching products:", error);
+                setLoading(false); // Resolve loading even on error
+            }
+        );
 
         return () => {
             unsubCats();

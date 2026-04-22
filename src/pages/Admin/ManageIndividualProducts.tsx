@@ -55,7 +55,7 @@ const ManageIndividualProducts: React.FC = () => {
     });
 
     // Fetch Products
-    const unsubProds = onSnapshot(query(collection(db, 'products'), orderBy('createdAt', 'desc')), (snapshot) => {
+    const unsubProds = onSnapshot(query(collection(db, 'products'), orderBy('updatedAt', 'desc')), (snapshot) => {
       setProducts(snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id
