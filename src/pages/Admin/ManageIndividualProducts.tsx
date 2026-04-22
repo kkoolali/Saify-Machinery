@@ -21,6 +21,7 @@ interface Product {
   seoDescription?: string;
   seoKeywords?: string;
   featured: boolean;
+  enquiryOnly?: boolean;
   createdAt: any;
 }
 
@@ -40,6 +41,8 @@ const ManageIndividualProducts: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const extraFileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const [videoUploading, setVideoUploading] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -54,7 +57,8 @@ const ManageIndividualProducts: React.FC = () => {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
-    featured: false
+    featured: false,
+    enquiryOnly: false
   });
 
   useEffect(() => {
@@ -126,6 +130,24 @@ const ManageIndividualProducts: React.FC = () => {
     }));
   };
 
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVideoUploading(true);
+    try {
+      const storageRef = ref(storage, `videos/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      setFormData(prev => ({ ...prev, videoUrl: url, videoTitle: formData.videoTitle || file.name.split('.')[0] }));
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      alert("Failed to upload video.");
+    } finally {
+      setVideoUploading(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.imageUrl) {
@@ -150,7 +172,7 @@ const ManageIndividualProducts: React.FC = () => {
       setFormData({ 
         title: '', description: '', categoryId: '', price: '', imageUrl: '', images: [], 
         videoUrl: '', videoTitle: '',
-        seoTitle: '', seoDescription: '', seoKeywords: '', featured: false 
+        seoTitle: '', seoDescription: '', seoKeywords: '', featured: false, enquiryOnly: false 
       });
     } catch (error) {
       console.error("Error saving product:", error);
@@ -171,7 +193,8 @@ const ManageIndividualProducts: React.FC = () => {
       seoTitle: prod.seoTitle || '',
       seoDescription: prod.seoDescription || '',
       seoKeywords: prod.seoKeywords || '',
-      featured: prod.featured || false
+      featured: prod.featured || false,
+      enquiryOnly: prod.enquiryOnly || false
     });
     setEditingId(prod.id);
     setIsAdding(true);
@@ -309,7 +332,7 @@ const ManageIndividualProducts: React.FC = () => {
                     <label className="text-xs font-black uppercase text-gray-400 tracking-wider">Price (Optional)</label>
                     <input value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} type="text" placeholder="e.g. ₹4,500" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange outline-none transition-all" />
                 </div>
-                <div className="flex items-end pb-3">
+                <div className="flex items-end pb-3 gap-6">
                    <label className="flex items-center gap-3 cursor-pointer group">
                      <div className={`w-6 h-6 rounded-md border-2 transition-all flex items-center justify-center
                         ${formData.featured ? 'bg-brand-orange border-brand-orange' : 'bg-gray-50 border-gray-200 group-hover:border-brand-orange'}
@@ -318,6 +341,16 @@ const ManageIndividualProducts: React.FC = () => {
                         {formData.featured && <X size={14} className="text-white rotate-45" />}
                      </div>
                      <span className="text-sm font-bold text-gray-700">Display in Featured Grid</span>
+                   </label>
+
+                   <label className="flex items-center gap-3 cursor-pointer group">
+                     <div className={`w-6 h-6 rounded-md border-2 transition-all flex items-center justify-center
+                        ${formData.enquiryOnly ? 'bg-brand-blue border-brand-blue' : 'bg-gray-50 border-gray-200 group-hover:border-brand-blue'}
+                     `}>
+                        <input type="checkbox" checked={formData.enquiryOnly} onChange={e => setFormData({...formData, enquiryOnly: e.target.checked})} className="hidden" />
+                        {formData.enquiryOnly && <X size={14} className="text-white rotate-45" />}
+                     </div>
+                     <span className="text-sm font-bold text-gray-700">Enquiry Only</span>
                    </label>
                 </div>
               </div>
@@ -329,19 +362,49 @@ const ManageIndividualProducts: React.FC = () => {
 
               {/* Video Tutorial Section */}
               <div className="bg-orange-50/50 p-6 rounded-2xl border border-orange-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <Play size={18} className="text-brand-orange" />
-                  <label className="text-sm font-bold text-brand-orange uppercase tracking-wider">Technical Video Tutorial</label>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Play size={18} className="text-brand-orange" />
+                    <label className="text-sm font-bold text-brand-orange uppercase tracking-wider">Technical Video Tutorial</label>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => videoInputRef.current?.click()}
+                    disabled={videoUploading}
+                    className="flex items-center gap-2 px-3 py-1 bg-white border border-orange-200 rounded-lg text-[10px] font-black text-brand-orange uppercase tracking-widest hover:bg-orange-50 transition-all disabled:opacity-50"
+                  >
+                    {videoUploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                    Upload MP4
+                  </button>
+                  <input type="file" ref={videoInputRef} onChange={handleVideoUpload} accept="video/mp4" className="hidden" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <input value={formData.videoTitle} onChange={e => setFormData({...formData, videoTitle: e.target.value})} type="text" placeholder="Video Title (e.g. Installation Guide)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
-                    <p className="text-[10px] text-gray-400 ml-1">E.g.: Usage Demonstration, Maintenance Tips</p>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <input value={formData.videoTitle} onChange={e => setFormData({...formData, videoTitle: e.target.value})} type="text" placeholder="Video Title (e.g. Installation Guide)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
+                      <p className="text-[10px] text-gray-400 ml-1">Title for the tutorial section</p>
+                    </div>
+                    <div className="space-y-1">
+                      <input value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} type="text" placeholder="Video URL or Upload Path" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
+                      <p className="text-[10px] text-gray-400 ml-1">Direct URL or uploaded storage link</p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <input value={formData.videoUrl} onChange={e => setFormData({...formData, videoUrl: e.target.value})} type="text" placeholder="Video URL (YouTube/Vimeo)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-orange outline-none transition-all text-sm" />
-                    <p className="text-[10px] text-gray-400 ml-1">Paste the full link here</p>
-                  </div>
+                  {formData.videoUrl && (
+                    <div className="flex items-center justify-between px-4 py-2 bg-green-50 border border-green-100 rounded-xl">
+                      <div className="flex items-center gap-2 text-green-700 text-[10px] font-bold">
+                        <Play size={14} className="fill-green-700" />
+                        Video Attached Successfully
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData({...formData, videoUrl: '', videoTitle: ''})}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

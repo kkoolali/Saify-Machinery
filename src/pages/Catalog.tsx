@@ -26,6 +26,7 @@ interface Product {
     seoDescription?: string;
     seoKeywords?: string;
     featured: boolean;
+    enquiryOnly?: boolean;
 }
 
 interface Category {
@@ -487,7 +488,9 @@ export default function Catalog() {
                                                                 <div className="flex flex-col">
                                                                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 italic">Est. Pricing</span>
                                                                     <div className="text-brand-blue font-black text-lg font-mono tracking-tighter">
-                                                                        {prod.price ? (
+                                                                        {prod.enquiryOnly ? (
+                                                                            <span className="text-[10px] text-brand-orange font-bold uppercase tracking-widest">Enquiry Only</span>
+                                                                        ) : prod.price ? (
                                                                             <span className="flex items-center gap-1">
                                                                                 <Tag size={14} className="opacity-30" />
                                                                                 {prod.price}
@@ -706,7 +709,10 @@ export default function Catalog() {
                                         <div className="bg-brand-blue/5 p-6 rounded-[2rem] border border-brand-blue/10 group hover:bg-brand-blue hover:text-white transition-all duration-500">
                                             <p className="text-[9px] font-black text-brand-blue group-hover:text-white/70 uppercase tracking-[0.2em] mb-2">Price Index</p>
                                             <p className="text-2xl font-black font-mono tracking-tighter">
-                                                {selectedProduct.price || <span className="text-[10px] uppercase font-bold text-gray-400 group-hover:text-white">Ask Quote</span>}
+                                                {selectedProduct.enquiryOnly ? 
+                                                    <span className="text-[12px] uppercase font-bold text-brand-orange group-hover:text-white">Enquiry Only</span> 
+                                                    : (selectedProduct.price || <span className="text-[10px] uppercase font-bold text-gray-400 group-hover:text-white">Ask Quote</span>)
+                                                }
                                             </p>
                                         </div>
                                         <div className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 group hover:border-brand-orange/30 transition-all">
@@ -716,34 +722,35 @@ export default function Catalog() {
                                     </div>
 
                                     {/* Video Tutorial Section */}
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-                                            <div className="w-6 h-[1px] bg-gray-200"></div> Video Support
-                                        </label>
-                                        {selectedProduct.videoUrl ? (
+                                    {selectedProduct.videoUrl && (
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                                <div className="w-6 h-[1px] bg-gray-200"></div> Video Support
+                                            </label>
                                             <div className="bg-black rounded-3xl overflow-hidden aspect-video relative group/video border-4 border-gray-100 shadow-xl">
-                                                <iframe 
-                                                    src={selectedProduct.videoUrl.replace('watch?v=', 'embed/').split('&')[0]} 
-                                                    className="w-full h-full"
-                                                    title={selectedProduct.videoTitle || 'Product Tutorial'}
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowFullScreen
-                                                />
-                                                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/10">
+                                                {(selectedProduct.videoUrl.includes('youtube.com') || selectedProduct.videoUrl.includes('youtu.be') || selectedProduct.videoUrl.includes('vimeo.com')) ? (
+                                                    <iframe 
+                                                        src={selectedProduct.videoUrl.replace('watch?v=', 'embed/').split('&')[0]} 
+                                                        className="w-full h-full"
+                                                        title={selectedProduct.videoTitle || 'Product Tutorial'}
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                    />
+                                                ) : (
+                                                    <video 
+                                                        src={selectedProduct.videoUrl} 
+                                                        className="w-full h-full object-cover" 
+                                                        controls 
+                                                        playsInline
+                                                    />
+                                                )}
+                                                <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-[8px] font-black text-white uppercase tracking-widest border border-white/10 z-10 pointer-events-none">
                                                     <Play size={10} className="fill-white" />
                                                     {selectedProduct.videoTitle || 'Technical Demonstration'}
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="bg-gray-50 rounded-3xl p-6 border border-dashed border-gray-200 flex flex-col items-center justify-center text-center">
-                                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                                                    <Loader2 size={20} className="text-gray-300" />
-                                                </div>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Video Guide Pending</p>
-                                                <p className="text-xs text-gray-500 max-w-[200px]">Request a custom installation or usage video via WhatsApp.</p>
-                                            </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Controller Actions */}
