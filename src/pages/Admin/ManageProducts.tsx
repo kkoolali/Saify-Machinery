@@ -5,7 +5,7 @@ import { db, storage } from '../../lib/firebase';
 import { 
   Plus, Edit2, Trash2, Save, X, ImageIcon, ShoppingBag, Loader2, Upload, 
   Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, 
-  Cog, Construction
+  Cog, Construction, Search
 } from 'lucide-react';
 
 interface Category {
@@ -16,6 +16,9 @@ interface Category {
   color: string;
   items: string[];
   images: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
 }
 
 const AVAILABLE_ICONS = [
@@ -46,7 +49,10 @@ const ManageProducts: React.FC = () => {
     icon: 'Wrench',
     color: 'bg-blue-50 text-brand-blue',
     items: '',
-    images: [] as string[]
+    images: [] as string[],
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: ''
   });
 
   useEffect(() => {
@@ -100,8 +106,15 @@ const ManageProducts: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      ...formData,
+      id: formData.id,
+      title: formData.title,
+      icon: formData.icon,
+      color: formData.color,
       items: formData.items.split('\n').filter(i => i.trim()),
+      images: formData.images,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      seoKeywords: formData.seoKeywords,
     };
 
     try {
@@ -112,7 +125,10 @@ const ManageProducts: React.FC = () => {
         await addDoc(collection(db, 'categories'), payload);
         setIsAdding(false);
       }
-      setFormData({ id: '', title: '', icon: 'Wrench', color: 'bg-blue-50 text-brand-blue', items: '', images: [] });
+      setFormData({ 
+        id: '', title: '', icon: 'Wrench', color: 'bg-blue-50 text-brand-blue', 
+        items: '', images: [], seoTitle: '', seoDescription: '', seoKeywords: '' 
+      });
     } catch (error) {
       console.error("Error saving category:", error);
       alert("Failed to save. Check console for details.");
@@ -126,7 +142,10 @@ const ManageProducts: React.FC = () => {
       icon: cat.icon,
       color: cat.color,
       items: cat.items.join('\n'),
-      images: cat.images || []
+      images: cat.images || [],
+      seoTitle: cat.seoTitle || '',
+      seoDescription: cat.seoDescription || '',
+      seoKeywords: cat.seoKeywords || ''
     });
     setEditingId(cat.docId);
     setIsAdding(true);
@@ -259,6 +278,28 @@ const ManageProducts: React.FC = () => {
                 </div>
                 <p className="text-[10px] text-gray-400 mt-2">Recommended: 1200x800px. First image will be the primary one.</p>
               </div>
+
+              {/* SEO Meta Fields */}
+              <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Search size={16} className="text-brand-blue" />
+                  <label className="block text-sm font-bold text-brand-blue">SEO Configuration</label>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <input value={formData.seoTitle} onChange={e => setFormData({...formData, seoTitle: e.target.value})} type="text" placeholder="Meta Title (Optional)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm" />
+                    <p className="text-[10px] text-gray-500 mt-1 ml-1">Ideal length: 50-60 characters</p>
+                  </div>
+                  <div>
+                    <input value={formData.seoKeywords} onChange={e => setFormData({...formData, seoKeywords: e.target.value})} type="text" placeholder="Meta Keywords (Comma separated)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm" />
+                    <p className="text-[10px] text-gray-500 mt-1 ml-1">E.g.: pipes, plumbing, wardha hardware</p>
+                  </div>
+                  <div>
+                    <textarea rows={3} value={formData.seoDescription} onChange={e => setFormData({...formData, seoDescription: e.target.value})} placeholder="Meta Description (Optional)" className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all resize-none text-sm" />
+                    <p className="text-[10px] text-gray-500 mt-1 ml-1">Ideal length: 150-160 characters</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="md:col-span-2 flex justify-end gap-4 pt-6 border-t border-gray-100">
@@ -299,6 +340,9 @@ const ManageProducts: React.FC = () => {
                   <div className="flex items-center gap-4 mt-1 text-xs text-gray-400 font-medium">
                     <span className="flex items-center gap-1"><ShoppingBag size={14} /> {cat.items.length} Products</span>
                     <span className="flex items-center gap-1"><ImageIcon size={14} /> {cat.images?.length || 0} Images</span>
+                    {(cat.seoTitle || cat.seoDescription) && (
+                      <span className="flex items-center gap-1 text-brand-blue"><Search size={14} /> SEO Ready</span>
+                    )}
                   </div>
                 </div>
               </div>

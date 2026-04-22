@@ -12,7 +12,20 @@ const iconMap: Record<string, any> = {
   Droplet, Wrench, Sprout, Zap, Lightbulb, Hammer, Settings, Home, Cog, Construction 
 };
 
-const localCategories = [
+// Types
+interface Category {
+  id: string;
+  title: string;
+  icon: any;
+  color: string;
+  items: string[];
+  images: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+}
+
+const localCategories: Category[] = [
   // ... local categories same as before as fallback
   {
     id: 'plumbing',
@@ -86,12 +99,12 @@ const localCategories = [
 
 export default function Products() {
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('default');
   
   // Modal & Carousel State
-  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -102,7 +115,7 @@ export default function Products() {
         return {
           ...item,
           icon: iconMap[item.icon] || iconMap['Wrench']
-        };
+        } as Category;
       });
       
       if (data.length > 0) {
@@ -146,7 +159,32 @@ export default function Products() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedCategory]);
 
-  const openModal = (category: any) => {
+  // Handle SEO Meta Tags dynamically when modal opens/closes
+  useEffect(() => {
+    if (!selectedCategory) {
+      // Revert to defaults when closed
+      document.title = 'Saify Machinery | Hardware & Industrial Supplier';
+      document.querySelector('meta[name="description"]')?.setAttribute('content', 'Your trusted partner for agricultural tools, building materials, pipeline fittings, plumbing wares, and overall hardware products in Wardha district.');
+      document.querySelector('meta[name="keywords"]')?.setAttribute('content', 'Saify Machinery, hardware store, agricultural tools, building materials, plubming, Pulgaon, Wardha');
+      return;
+    }
+
+    // Set custom SEO tags if available, otherwise fallbacks based on category title
+    document.title = selectedCategory.seoTitle || `${selectedCategory.title} | Saify Machinery`;
+    
+    let descriptionMeta = document.querySelector('meta[name="description"]');
+    if (descriptionMeta) {
+      descriptionMeta.setAttribute('content', selectedCategory.seoDescription || `Explore our extensive collection of ${selectedCategory.title} including ${selectedCategory.items.slice(0, 2).join(', ')}.`);
+    }
+
+    let keywordMeta = document.querySelector('meta[name="keywords"]');
+    if (keywordMeta) {
+      keywordMeta.setAttribute('content', selectedCategory.seoKeywords || `${selectedCategory.title.toLowerCase()}, construction, hardware, tools, saify machinery`);
+    }
+
+  }, [selectedCategory]);
+
+  const openModal = (category: Category) => {
     setSelectedCategory(category);
     setCurrentImageIndex(0);
     document.body.style.overflow = 'hidden'; // prevent scrolling
