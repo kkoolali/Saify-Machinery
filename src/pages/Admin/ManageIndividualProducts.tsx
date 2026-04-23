@@ -7,6 +7,13 @@ import {
   Search, Filter, Tag, Package, AlertCircle, Play
 } from 'lucide-react';
 
+interface Variant {
+  id: string;
+  name: string;
+  price?: string;
+  imageUrl?: string;
+}
+
 interface Product {
   id: string;
   title: string;
@@ -22,6 +29,8 @@ interface Product {
   seoKeywords?: string;
   featured: boolean;
   enquiryOnly?: boolean;
+  variants?: Variant[];
+  variantLabel?: string;
   createdAt: any;
 }
 
@@ -58,7 +67,9 @@ const ManageIndividualProducts: React.FC = () => {
     seoDescription: '',
     seoKeywords: '',
     featured: false,
-    enquiryOnly: false
+    enquiryOnly: false,
+    variants: [] as Variant[],
+    variantLabel: ''
   });
 
   useEffect(() => {
@@ -172,7 +183,8 @@ const ManageIndividualProducts: React.FC = () => {
       setFormData({ 
         title: '', description: '', categoryId: '', price: '', imageUrl: '', images: [], 
         videoUrl: '', videoTitle: '',
-        seoTitle: '', seoDescription: '', seoKeywords: '', featured: false, enquiryOnly: false 
+        seoTitle: '', seoDescription: '', seoKeywords: '', featured: false, enquiryOnly: false,
+        variants: [], variantLabel: '' 
       });
     } catch (error) {
       console.error("Error saving product:", error);
@@ -194,7 +206,9 @@ const ManageIndividualProducts: React.FC = () => {
       seoDescription: prod.seoDescription || '',
       seoKeywords: prod.seoKeywords || '',
       featured: prod.featured || false,
-      enquiryOnly: prod.enquiryOnly || false
+      enquiryOnly: prod.enquiryOnly || false,
+      variants: prod.variants || [],
+      variantLabel: prod.variantLabel || ''
     });
     setEditingId(prod.id);
     setIsAdding(true);
@@ -352,6 +366,100 @@ const ManageIndividualProducts: React.FC = () => {
                      </div>
                      <span className="text-sm font-bold text-gray-700">Enquiry Only</span>
                    </label>
+                </div>
+              </div>
+
+              {/* Variant Management Section */}
+              <div className="bg-brand-blue/5 p-6 rounded-2xl border border-brand-blue/10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Tag size={18} className="text-brand-blue" />
+                    <label className="text-sm font-bold text-brand-blue uppercase tracking-wider">Product Variants (Sizes, Materials, etc.)</label>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setFormData({
+                      ...formData,
+                      variants: [...formData.variants, { id: Date.now().toString(), name: '', price: '', imageUrl: '' }]
+                    })}
+                    className="flex items-center gap-2 px-3 py-1 bg-white border border-brand-blue/20 rounded-lg text-[10px] font-black text-brand-blue uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all"
+                  >
+                    <Plus size={12} />
+                    Add Option
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <input 
+                      value={formData.variantLabel} 
+                      onChange={e => setFormData({...formData, variantLabel: e.target.value})} 
+                      type="text" 
+                      placeholder="Variant Label (e.g. Select Size, Machine Power)" 
+                      className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue outline-none transition-all text-sm font-bold" 
+                    />
+                    <p className="text-[10px] text-gray-400 ml-1">Leave blank if no variants</p>
+                  </div>
+
+                  {formData.variants.length > 0 && (
+                    <div className="space-y-3 mt-4">
+                      {formData.variants.map((variant, idx) => (
+                        <div key={variant.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative group/variant">
+                          <div className="md:col-span-4">
+                            <input 
+                              value={variant.name}
+                              onChange={e => {
+                                const newVariants = [...formData.variants];
+                                newVariants[idx].name = e.target.value;
+                                setFormData({...formData, variants: newVariants});
+                              }}
+                              type="text" 
+                              placeholder="Option Name (e.g. 1.0 HP)" 
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:bg-white outline-none" 
+                            />
+                          </div>
+                          <div className="md:col-span-3">
+                            <input 
+                              value={variant.price}
+                              onChange={e => {
+                                const newVariants = [...formData.variants];
+                                newVariants[idx].price = e.target.value;
+                                setFormData({...formData, variants: newVariants});
+                              }}
+                              type="text" 
+                              placeholder="Price (Optional)" 
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:bg-white outline-none" 
+                            />
+                          </div>
+                          <div className="md:col-span-4">
+                            <input 
+                              value={variant.imageUrl}
+                              onChange={e => {
+                                const newVariants = [...formData.variants];
+                                newVariants[idx].imageUrl = e.target.value;
+                                setFormData({...formData, variants: newVariants});
+                              }}
+                              type="text" 
+                              placeholder="Image URL (Optional)" 
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:bg-white outline-none" 
+                            />
+                          </div>
+                          <div className="md:col-span-1 flex justify-center">
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                const newVariants = formData.variants.filter((_, i) => i !== idx);
+                                setFormData({...formData, variants: newVariants});
+                              }}
+                              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

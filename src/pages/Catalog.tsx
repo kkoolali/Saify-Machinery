@@ -15,6 +15,13 @@ import {
 import { useCompare } from '../context/CompareContext';
 import TechnicalAdvisor from '../components/TechnicalAdvisor';
 
+interface Variant {
+    id: string;
+    name: string;
+    price?: string;
+    imageUrl?: string;
+}
+
 interface Product {
     id: string;
     title: string;
@@ -30,6 +37,8 @@ interface Product {
     seoKeywords?: string;
     featured: boolean;
     enquiryOnly?: boolean;
+    variants?: Variant[];
+    variantLabel?: string;
 }
 
 interface Category {
@@ -52,8 +61,29 @@ export default function Catalog() {
     const [maxPrice, setMaxPrice] = useState<number | ''>('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
     const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+
+    // Dynamic Max Price for Slider
+    const maxItemPrice = useMemo(() => {
+        if (products.length === 0) return 100000;
+        const prices = products
+            .map(p => {
+                if (!p.price) return 0;
+                const match = p.price.match(/\d+/g);
+                return match ? parseInt(match.join('')) : 0;
+            })
+            .filter(price => price > 0);
+        return prices.length > 0 ? Math.max(...prices) : 100000;
+    }, [products]);
+
+    useEffect(() => {
+        if (maxPrice === '' && products.length > 0) {
+            setMaxPrice(maxItemPrice);
+        }
+    }, [maxItemPrice, products.length]);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [copied, setCopied] = useState(false);
     const [isZoomed, setIsZoomed] = useState(false);
@@ -301,14 +331,15 @@ export default function Catalog() {
                                             <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900">Console</h2>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            {(selectedCategory !== 'all' || searchTerm || selectedAvailability !== 'all' || minPrice !== '' || maxPrice !== '') && (
+                                            {(selectedCategory !== 'all' || searchTerm || selectedAvailability !== 'all' || minPrice !== '' || maxPrice !== maxItemPrice) && (
                                                 <button 
                                                     onClick={() => { 
                                                         setSelectedCategory('all'); 
                                                         setSearchTerm(''); 
                                                         setSelectedAvailability('all');
                                                         setMinPrice('');
-                                                        setMaxPrice('');
+                                                        setMaxPrice(maxItemPrice);
+                                                        setIsCategoryDropdownOpen(false);
                                                     }}
                                                     className="text-[10px] font-black text-brand-orange hover:scale-110 transition-transform uppercase tracking-[0.2em]"
                                                 >
@@ -340,113 +371,147 @@ export default function Catalog() {
                                             </div>
                                         </div>
 
-                                        {/* Availability Filter */}
+                                        {/* Category Selection Dropdown */}
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Availability Status</label>
-                                            <div className="flex flex-col gap-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Technical Category</label>
+                                            <div className="relative">
+                                                <button 
+                                                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                                                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 border border-transparent rounded-[1.25rem] focus:bg-white focus:border-brand-orange/30 transition-all font-bold text-sm text-gray-900 shadow-inner group"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-1.5 bg-brand-orange/10 text-brand-orange rounded-lg">
+                                                            {selectedCategory === 'all' ? <Grid size={16} /> : <Package size={16} />}
+                                                        </div>
+                                                        <span>{selectedCategory === 'all' ? 'Full Inventory' : categories.find(c => c.id === selectedCategory)?.title}</span>
+                                                    </div>
+                                                    <ChevronRight size={18} className={`text-gray-300 transition-transform duration-300 ${isCategoryDropdownOpen ? 'rotate-90' : ''}`} />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {isCategoryDropdownOpen && (
+                                                        <motion.div 
+                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-[2rem] shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                                                        >
+                                                            <div className="max-h-60 overflow-y-auto p-2 scrollbar-hide">
+                                                                <button 
+                                                                    onClick={() => { setSelectedCategory('all'); setIsCategoryDropdownOpen(false); }}
+                                                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${selectedCategory === 'all' ? 'bg-brand-blue text-white' : 'hover:bg-gray-50 text-gray-600'}`}
+                                                                >
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Grid size={14} />
+                                                                        <span>All Products</span>
+                                                                    </div>
+                                                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${selectedCategory === 'all' ? 'bg-white/20' : 'bg-gray-100'}`}>{products.length}</span>
+                                                                </button>
+                                                                {categories.map(cat => {
+                                                                    const count = products.filter(p => p.categoryId === cat.id).length;
+                                                                    return (
+                                                                        <button 
+                                                                            key={cat.id}
+                                                                            onClick={() => { setSelectedCategory(cat.id); setIsCategoryDropdownOpen(false); }}
+                                                                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${selectedCategory === cat.id ? 'bg-brand-blue text-white' : 'hover:bg-gray-50 text-gray-600'}`}
+                                                                        >
+                                                                            <div className="flex items-center gap-2">
+                                                                                <Package size={14} />
+                                                                                <span className="truncate">{cat.title}</span>
+                                                                            </div>
+                                                                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${selectedCategory === cat.id ? 'bg-white/20' : 'bg-gray-100'}`}>{count}</span>
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+
+                                        {/* Availability Filter (Checkboxes) */}
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Inventory Status</label>
+                                            <div className="grid grid-cols-1 gap-3">
                                                 {[
-                                                    { id: 'all', label: 'All Status', count: products.length },
-                                                    { id: 'in-stock', label: 'Available Now', count: products.filter(p => !p.enquiryOnly).length },
-                                                    { id: 'enquiry-only', label: 'Enquiry Only', count: products.filter(p => p.enquiryOnly).length }
+                                                    { id: 'all', label: 'All Status', icon: <Package size={14} />, count: products.length },
+                                                    { id: 'in-stock', label: 'In-Stock', icon: <Check size={14} />, count: products.filter(p => !p.enquiryOnly).length },
+                                                    { id: 'enquiry-only', label: 'Enquiry Only', icon: <Phone size={14} />, count: products.filter(p => p.enquiryOnly).length }
                                                 ].map(option => (
-                                                    <button 
+                                                    <label 
                                                         key={option.id}
-                                                        onClick={() => setSelectedAvailability(option.id)}
-                                                        className={`flex items-center justify-between px-5 py-4 rounded-[1.25rem] text-sm font-bold transition-all ${
+                                                        className={`flex items-center justify-between px-5 py-4 rounded-[1.25rem] cursor-pointer transition-all border-2 ${
                                                             selectedAvailability === option.id 
-                                                            ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/30 scale-[1.02]' 
-                                                            : 'bg-gray-50/50 text-gray-600 hover:bg-white hover:shadow-md'
+                                                            ? 'bg-brand-blue/5 border-brand-blue text-brand-blue' 
+                                                            : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200 shadow-sm'
                                                         }`}
                                                     >
-                                                        <span>{option.label}</span>
-                                                        <span className={`text-[9px] font-black px-2 py-1 rounded-full ${selectedAvailability === option.id ? 'bg-white/20 text-white' : 'bg-gray-200/50 text-gray-400'}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedAvailability === option.id ? 'bg-brand-blue border-brand-blue' : 'border-gray-200'}`}>
+                                                                <input 
+                                                                    type="radio" 
+                                                                    name="availability"
+                                                                    checked={selectedAvailability === option.id}
+                                                                    onChange={() => setSelectedAvailability(option.id)}
+                                                                    className="hidden" 
+                                                                />
+                                                                {selectedAvailability === option.id && <Check size={12} className="text-white" />}
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                {option.icon}
+                                                                <span className="text-xs font-bold">{option.label}</span>
+                                                            </div>
+                                                        </div>
+                                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${selectedAvailability === option.id ? 'bg-brand-blue text-white' : 'bg-gray-100 text-gray-400'}`}>
                                                             {option.count}
                                                         </span>
-                                                    </button>
+                                                    </label>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        {/* Price Thresholds */}
+                                        {/* Price Range Slider */}
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Financial Parameters (₹)</label>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div className="relative">
-                                                    <input 
-                                                        type="number" 
-                                                        placeholder="Min" 
-                                                        value={minPrice}
-                                                        onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value) : '')}
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-brand-orange/30 outline-none text-xs font-bold"
-                                                    />
-                                                </div>
-                                                <div className="relative">
-                                                    <input 
-                                                        type="number" 
-                                                        placeholder="Max" 
-                                                        value={maxPrice}
-                                                        onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-brand-orange/30 outline-none text-xs font-bold"
-                                                    />
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Budget Index</label>
+                                                <span className="text-[10px] font-black text-brand-orange italic">₹{maxPrice || maxItemPrice}</span>
+                                            </div>
+                                            <div className="pb-4">
+                                                <input 
+                                                    type="range" 
+                                                    min="0" 
+                                                    max={maxItemPrice} 
+                                                    step="1000"
+                                                    value={maxPrice || maxItemPrice}
+                                                    onChange={(e) => setMaxPrice(parseInt(e.target.value))}
+                                                    className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-brand-orange"
+                                                />
+                                                <div className="flex justify-between mt-2 text-[9px] font-black text-gray-300 uppercase tracking-widest">
+                                                    <span>₹0</span>
+                                                    <span>₹{maxItemPrice.toLocaleString()}</span>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {/* Category Filter */}
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Filter segments</label>
-                                            <div className="flex flex-col gap-2">
-                                                <button 
-                                                    onClick={() => setSelectedCategory('all')}
-                                                    className={`flex items-center justify-between px-5 py-4 rounded-[1.25rem] text-sm font-bold transition-all group ${
-                                                        selectedCategory === 'all' 
-                                                        ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/30 scale-[1.02]' 
-                                                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Grid size={16} className={selectedCategory === 'all' ? 'text-white' : 'text-gray-400'} />
-                                                        <span>Full Inventory</span>
-                                                    </div>
-                                                    <ChevronRight size={14} className={`transition-all duration-300 ${selectedCategory === 'all' ? 'rotate-90 translate-x-1' : 'opacity-30 group-hover:opacity-100'}`} />
-                                                </button>
-
-                                                <div className="space-y-2 mt-2">
-                                                    {loading && categories.length === 0 ? (
-                                                        [...Array(6)].map((_, i) => (
-                                                            <div key={i} className="h-14 bg-gray-50 rounded-[1.25rem] animate-pulse"></div>
-                                                        ))
-                                                    ) : (
-                                                        categories.map((cat) => {
-                                                            const isActive = selectedCategory === cat.id;
-                                                            const productCount = products.filter(p => p.categoryId === cat.id).length;
-                                                            
-                                                            return (
-                                                                <button 
-                                                                    key={cat.id}
-                                                                    onClick={() => setSelectedCategory(cat.id)}
-                                                                    className={`flex items-center justify-between px-5 py-4 rounded-[1.25rem] text-sm font-bold transition-all group ${
-                                                                        isActive 
-                                                                        ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/30 scale-[1.02]' 
-                                                                        : 'bg-gray-50/50 text-gray-600 hover:bg-white hover:shadow-md hover:border-gray-100 border border-transparent'
-                                                                    }`}
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-white/20' : 'bg-gray-100 text-gray-400 group-hover:bg-brand-orange/10 group-hover:text-brand-orange'}`}>
-                                                                            <Package size={14} />
-                                                                        </div>
-                                                                        <span className="truncate max-w-[120px]">{cat.title}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className={`text-[9px] font-black px-2 py-1 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200/50 text-gray-400 group-hover:bg-brand-orange/20 group-hover:text-brand-orange'}`}>
-                                                                            {productCount}
-                                                                        </span>
-                                                                        <ChevronRight size={14} className={`transition-all duration-300 ${isActive ? 'rotate-90 translate-x-1' : 'opacity-20 group-hover:opacity-100'}`} />
-                                                                    </div>
-                                                                </button>
-                                                            );
-                                                        })
-                                                    )}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Min Price</span>
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder="0" 
+                                                        value={minPrice}
+                                                        onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value) : '')}
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-brand-orange/30 outline-none text-xs font-bold shadow-inner"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Max Price</span>
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder={maxItemPrice.toString()} 
+                                                        value={maxPrice}
+                                                        onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-brand-orange/30 outline-none text-xs font-bold shadow-inner"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -708,7 +773,7 @@ export default function Catalog() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setSelectedProduct(null)}
+                            onClick={() => { setSelectedProduct(null); setSelectedVariant(null); }}
                             className="absolute inset-0 bg-brand-blue-dark/95 backdrop-blur-md"
                         />
                         <motion.div 
@@ -719,7 +784,7 @@ export default function Catalog() {
                         >
                             {/* Close button - Floating style */}
                             <button 
-                                onClick={() => setSelectedProduct(null)}
+                                onClick={() => { setSelectedProduct(null); setSelectedVariant(null); }}
                                 className="absolute top-8 right-8 z-[60] p-3 bg-white/80 backdrop-blur-xl hover:bg-brand-orange hover:text-white rounded-2xl text-gray-900 shadow-2xl transition-all border border-gray-100 ring-4 ring-black/5"
                             >
                                 <X size={20} />
@@ -733,30 +798,30 @@ export default function Catalog() {
                                     onMouseEnter={() => setIsZoomed(true)}
                                     onMouseLeave={() => setIsZoomed(false)}
                                 >
-                                    <AnimatePresence mode="wait">
-                                        <motion.img 
-                                            key={activeImageIndex}
-                                            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-                                            animate={{ 
-                                                opacity: 1,
-                                                scale: isZoomed ? 2.5 : 1,
-                                                filter: 'blur(0px)',
-                                                x: isZoomed ? `${50 - zoomPos.x}%` : 0,
-                                                y: isZoomed ? `${50 - zoomPos.y}%` : 0
-                                            }}
-                                            exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
-                                            transition={{ 
-                                                opacity: { duration: 0.3 },
-                                                scale: { duration: 0.2 },
-                                                x: { duration: isZoomed ? 0 : 0.3 },
-                                                y: { duration: isZoomed ? 0 : 0.3 },
-                                                filter: { duration: 0.3 }
-                                            }}
-                                            src={[selectedProduct.imageUrl, ...(selectedProduct.images || [])][activeImageIndex]} 
-                                            alt={selectedProduct.title} 
-                                            className="w-full h-full object-contain p-12 md:p-20 drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)]"
-                                        />
-                                    </AnimatePresence>
+                                            <AnimatePresence mode="wait">
+                                                <motion.img 
+                                                    key={selectedVariant?.imageUrl || activeImageIndex}
+                                                    initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+                                                    animate={{ 
+                                                        opacity: 1,
+                                                        scale: isZoomed ? 2.5 : 1,
+                                                        filter: 'blur(0px)',
+                                                        x: isZoomed ? `${50 - zoomPos.x}%` : 0,
+                                                        y: isZoomed ? `${50 - zoomPos.y}%` : 0
+                                                    }}
+                                                    exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}
+                                                    transition={{ 
+                                                        opacity: { duration: 0.3 },
+                                                        scale: { duration: 0.2 },
+                                                        x: { duration: isZoomed ? 0 : 0.3 },
+                                                        y: { duration: isZoomed ? 0 : 0.3 },
+                                                        filter: { duration: 0.3 }
+                                                    }}
+                                                    src={selectedVariant?.imageUrl || [selectedProduct.imageUrl, ...(selectedProduct.images || [])][activeImageIndex]} 
+                                                    alt={selectedProduct.title} 
+                                                    className="w-full h-full object-contain p-12 md:p-20 drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)]"
+                                                />
+                                            </AnimatePresence>
 
                                     {/* Navigation Arrows */}
                                     {[selectedProduct.imageUrl, ...(selectedProduct.images || [])].length > 1 && (
@@ -859,6 +924,30 @@ export default function Catalog() {
                                         </div>
                                     </div>
 
+                                    {/* Variant Selection Hub */}
+                                    {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                                <div className="w-6 h-[1px] bg-gray-200"></div> {selectedProduct.variantLabel || 'Specifications'}
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedProduct.variants.map((variant) => (
+                                                    <button
+                                                        key={variant.id}
+                                                        onClick={() => setSelectedVariant(variant)}
+                                                        className={`px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2
+                                                            ${selectedVariant?.id === variant.id 
+                                                                ? 'bg-brand-orange border-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-105' 
+                                                                : 'bg-white border-gray-100 text-gray-400 hover:border-brand-orange/30 hover:text-brand-orange'}
+                                                        `}
+                                                    >
+                                                        {variant.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Status Grid */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-brand-blue/5 p-6 rounded-[2rem] border border-brand-blue/10 group hover:bg-brand-blue hover:text-white transition-all duration-500">
@@ -866,7 +955,7 @@ export default function Catalog() {
                                             <p className="text-2xl font-black font-mono tracking-tighter">
                                                 {selectedProduct.enquiryOnly ? 
                                                     <span className="text-[12px] uppercase font-bold text-brand-orange group-hover:text-white">Enquiry Only</span> 
-                                                    : (selectedProduct.price || <span className="text-[10px] uppercase font-bold text-gray-400 group-hover:text-white">Ask Quote</span>)
+                                                    : (selectedVariant?.price || selectedProduct.price || <span className="text-[10px] uppercase font-bold text-gray-400 group-hover:text-white">Ask Quote</span>)
                                                 }
                                             </p>
                                         </div>

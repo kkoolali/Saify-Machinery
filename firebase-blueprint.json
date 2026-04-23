@@ -69,9 +69,48 @@
         "addedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["email"]
+    },
+    "Variant": {
+      "title": "Product Variant",
+      "description": "A specific selection for a product like size, color, or material.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "description": "e.g. 500 Liters, Blue, Stainless Steel" },
+        "price": { "type": "string", "description": "Price override for this variant" },
+        "imageUrl": { "type": "string", "description": "Image override for this variant" }
+      },
+      "required": ["id", "name"]
+    },
+    "Product": {
+      "title": "Catalog Product",
+      "description": "A standalone product in the catalog.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "price": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "videoUrl": { "type": "string" },
+        "videoTitle": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "enquiryOnly": { "type": "boolean" },
+        "variants": { "type": "array", "items": { "$ref": "#/entities/Variant" } },
+        "variantLabel": { "type": "string", "description": "e.g. Select Size, Color Selection" },
+        "updatedAt": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "description", "categoryId", "imageUrl", "featured"]
     }
   },
   "firestore": {
+    "products": {
+        "schema": { "$ref": "#/entities/Product" },
+        "description": "Individual items in the store's full catalog."
+    },
     "categories": {
       "schema": { "$ref": "#/entities/Category" },
       "description": "Product categories shown in the gallery."
