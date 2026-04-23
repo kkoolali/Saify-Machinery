@@ -104,11 +104,21 @@ service cloud.firestore {
 
     function isValidIndividualProduct(data) {
       return data.title is string && data.title.size() <= 256 &&
-             data.description is string && data.description.size() <= 5000 &&
+             data.description is string && data.description.size() <= 6000 &&
              data.categoryId is string && data.categoryId.size() <= 128 &&
              data.imageUrl is string && data.imageUrl.size() <= 2048 &&
              data.featured is bool &&
              (!('price' in data) || (data.price is string && data.price.size() <= 128)) &&
+             (!('enquiryOnly' in data) || (data.enquiryOnly is bool)) &&
+             (!('images' in data) || (data.images is list && data.images.size() <= 20)) &&
+             (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 2048)) &&
+             (!('videoTitle' in data) || (data.videoTitle is string && data.videoTitle.size() <= 256)) &&
+             (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 256)) &&
+             (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
+             (!('seoKeywords' in data) || (data.seoKeywords is string && data.seoKeywords.size() <= 1000)) &&
+             (!('variantLabel' in data) || (data.variantLabel is string && data.variantLabel.size() <= 256)) &&
+             (!('variants' in data) || (data.variants is list && data.variants.size() <= 50)) &&
+             (!('createdAt' in data) || (data.createdAt is number)) &&
              (data.updatedAt is number);
     }
 

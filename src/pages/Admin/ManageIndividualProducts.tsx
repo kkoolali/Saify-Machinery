@@ -190,18 +190,24 @@ const ManageIndividualProducts: React.FC = () => {
         return;
     }
 
-    const payload = {
+    const now = Date.now();
+    const payload: any = {
       ...formData,
-      createdAt: editingId ? undefined : Date.now(),
-      updatedAt: Date.now()
+      updatedAt: now
     };
+
+    if (!editingId) {
+      payload.createdAt = now;
+    }
 
     try {
       if (editingId) {
         await updateDoc(doc(db, 'products', editingId), payload);
+        alert("Product updated successfully!");
         setEditingId(null);
       } else {
         await addDoc(collection(db, 'products'), payload);
+        alert("Product published successfully!");
         setIsAdding(false);
       }
       setFormData({ 
