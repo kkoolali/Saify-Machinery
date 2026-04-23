@@ -1,6 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let genAI: GoogleGenAI | null = null;
+
+function getGenAI() {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not configured. Please add it in the Settings menu.");
+    }
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  return genAI;
+}
 
 export interface RecommendationInfo {
   productTitle: string;
@@ -26,6 +37,7 @@ export async function getTechnicalAdvice(
     enquiryOnly: p.enquiryOnly
   }));
 
+  const ai = getGenAI();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `

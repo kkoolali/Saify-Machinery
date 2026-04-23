@@ -51,7 +51,9 @@ const ManageIndividualProducts: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const extraFileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const variantFileInputRef = useRef<HTMLInputElement>(null);
   const [videoUploading, setVideoUploading] = useState(false);
+  const [activeVariantUploadIdx, setActiveVariantUploadIdx] = useState<number | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -156,6 +158,28 @@ const ManageIndividualProducts: React.FC = () => {
       alert("Failed to upload video.");
     } finally {
       setVideoUploading(false);
+    }
+  };
+
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || activeVariantUploadIdx === null) return;
+
+    setIsUploading(true);
+    try {
+      const storageRef = ref(storage, `products/variants/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      
+      const newVariants = [...formData.variants];
+      newVariants[activeVariantUploadIdx].imageUrl = url;
+      setFormData(prev => ({ ...prev, variants: newVariants }));
+    } catch (error) {
+      console.error("Error uploading variant image:", error);
+      alert("Failed to upload variant image.");
+    } finally {
+      setIsUploading(false);
+      setActiveVariantUploadIdx(null);
     }
   };
 
@@ -405,7 +429,22 @@ const ManageIndividualProducts: React.FC = () => {
                     <div className="space-y-3 mt-4">
                       {formData.variants.map((variant, idx) => (
                         <div key={variant.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative group/variant">
-                          <div className="md:col-span-4">
+                          <div className="md:col-span-1">
+                            <div 
+                              onClick={() => {
+                                setActiveVariantUploadIdx(idx);
+                                variantFileInputRef.current?.click();
+                              }}
+                              className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center cursor-pointer hover:border-brand-orange overflow-hidden shrink-0"
+                            >
+                              {variant.imageUrl ? (
+                                <img src={variant.imageUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <Upload size={14} className="text-gray-300" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="md:col-span-3">
                             <input 
                               value={variant.name}
                               onChange={e => {
@@ -414,11 +453,11 @@ const ManageIndividualProducts: React.FC = () => {
                                 setFormData({...formData, variants: newVariants});
                               }}
                               type="text" 
-                              placeholder="Option Name (e.g. 1.0 HP)" 
+                              placeholder="Name (e.g. 1.0 HP)" 
                               className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:bg-white outline-none" 
                             />
                           </div>
-                          <div className="md:col-span-3">
+                          <div className="md:col-span-2">
                             <input 
                               value={variant.price}
                               onChange={e => {
@@ -427,11 +466,11 @@ const ManageIndividualProducts: React.FC = () => {
                                 setFormData({...formData, variants: newVariants});
                               }}
                               type="text" 
-                              placeholder="Price (Optional)" 
+                              placeholder="Price (Opt)" 
                               className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:bg-white outline-none" 
                             />
                           </div>
-                          <div className="md:col-span-4">
+                          <div className="md:col-span-5">
                             <input 
                               value={variant.imageUrl}
                               onChange={e => {
@@ -441,7 +480,7 @@ const ManageIndividualProducts: React.FC = () => {
                               }}
                               type="text" 
                               placeholder="Image URL (Optional)" 
-                              className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-xs font-bold focus:bg-white outline-none" 
+                              className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold focus:bg-white outline-none" 
                             />
                           </div>
                           <div className="md:col-span-1 flex justify-center">
@@ -451,7 +490,7 @@ const ManageIndividualProducts: React.FC = () => {
                                 const newVariants = formData.variants.filter((_, i) => i !== idx);
                                 setFormData({...formData, variants: newVariants});
                               }}
-                              className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -460,6 +499,13 @@ const ManageIndividualProducts: React.FC = () => {
                       ))}
                     </div>
                   )}
+                  <input 
+                    type="file" 
+                    ref={variantFileInputRef} 
+                    onChange={handleVariantImageUpload} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
                 </div>
               </div>
 
