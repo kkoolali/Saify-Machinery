@@ -688,11 +688,23 @@ export default function Catalog() {
                                                                         Top Pick
                                                                     </div>
                                                                 )}
-                                                                {prod.videoUrl && (
-                                                                    <div className="bg-white/90 backdrop-blur-md text-brand-orange text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-orange/20 flex items-center gap-1.5 animate-pulse-slow">
-                                                                        <Play size={10} className="fill-brand-orange" />
-                                                                        Watch Tutorial
+                                                                {prod.variants && prod.variants.length > 0 && (
+                                                                    <div className="bg-white/95 backdrop-blur-md text-brand-blue text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-blue/20 flex items-center gap-1.5">
+                                                                        <SlidersHorizontal size={10} className="text-brand-orange" />
+                                                                        {prod.variants.length} {prod.variantLabel || 'Options'}
                                                                     </div>
+                                                                )}
+                                                                {prod.videoUrl && (
+                                                                    <button 
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedProduct(prod);
+                                                                        }}
+                                                                        className="bg-white/90 backdrop-blur-md text-brand-orange text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-orange/20 flex items-center gap-1.5 animate-pulse-slow hover:bg-brand-orange hover:text-white transition-all pointer-events-auto"
+                                                                    >
+                                                                        <Play size={10} className="fill-current" />
+                                                                        Watch Tutorial
+                                                                    </button>
                                                                 )}
                                                             </div>
 
@@ -713,13 +725,22 @@ export default function Catalog() {
                                                             </button>
 
                                                             {/* Quick Action Overlay */}
-                                                            <div className="absolute inset-0 bg-brand-blue-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
+                                                            <div className="absolute inset-0 bg-brand-blue-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                                                                {prod.videoUrl && (
+                                                                    <button 
+                                                                        onClick={() => setSelectedProduct(prod)}
+                                                                        className="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-brand-orange transition-all transform -translate-y-4 group-hover:translate-y-0"
+                                                                    >
+                                                                        <Play size={16} className="fill-current" />
+                                                                        Watch Video
+                                                                    </button>
+                                                                )}
                                                                 <button 
                                                                     onClick={() => setSelectedProduct(prod)}
                                                                     className="bg-white text-gray-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-brand-orange hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0"
                                                                 >
                                                                     <Eye size={16} />
-                                                                    Quick View
+                                                                    Technical Info
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -753,6 +774,7 @@ export default function Catalog() {
                                                                         ) : prod.price ? (
                                                                             <span className="flex items-center gap-1">
                                                                                 <Tag size={14} className="opacity-30" />
+                                                                                {prod.variants && prod.variants.length > 0 ? <span className="text-[8px] uppercase text-gray-400 mr-1">From</span> : null}
                                                                                 {prod.price}
                                                                             </span>
                                                                         ) : (
@@ -882,7 +904,10 @@ export default function Catalog() {
                                                         y: { duration: isZoomed ? 0 : 0.3 },
                                                         filter: { duration: 0.3 }
                                                     }}
-                                                    src={selectedVariant?.imageUrl || [selectedProduct.imageUrl, ...(selectedProduct.images || [])][activeImageIndex]} 
+                                                    src={(selectedVariant?.imageUrl && activeImageIndex === 0) 
+                                                        ? selectedVariant.imageUrl 
+                                                        : [selectedProduct.imageUrl, ...(selectedProduct.images || [])][activeImageIndex]
+                                                    } 
                                                     alt={selectedProduct.title} 
                                                     className="w-full h-full object-contain p-12 md:p-20 drop-shadow-[0_35px_35px_rgba(0,0,0,0.15)]"
                                                 />
@@ -992,20 +1017,35 @@ export default function Catalog() {
                                     {/* Variant Selection Hub */}
                                     {selectedProduct.variants && selectedProduct.variants.length > 0 && (
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
-                                                <div className="w-6 h-[1px] bg-gray-200"></div> {selectedProduct.variantLabel || 'Specifications'}
-                                            </label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                                    <div className="w-6 h-[1px] bg-gray-200"></div> {selectedProduct.variantLabel || 'Available Options'}
+                                                </label>
+                                                {selectedVariant && (
+                                                    <button 
+                                                        onClick={() => setSelectedVariant(null)}
+                                                        className="text-[9px] font-black text-brand-orange uppercase tracking-widest hover:underline"
+                                                    >
+                                                        Clear Selection
+                                                    </button>
+                                                )}
+                                            </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {selectedProduct.variants.map((variant) => (
                                                     <button
                                                         key={variant.id}
-                                                        onClick={() => setSelectedVariant(variant)}
-                                                        className={`px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2
+                                                        onClick={() => {
+                                                            setSelectedVariant(variant);
+                                                            setActiveImageIndex(0); // Reset to primary view when variant changes
+                                                            setIsZoomed(false);
+                                                        }}
+                                                        className={`px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 flex items-center gap-2
                                                             ${selectedVariant?.id === variant.id 
                                                                 ? 'bg-brand-orange border-brand-orange text-white shadow-lg shadow-brand-orange/20 scale-105' 
                                                                 : 'bg-white border-gray-100 text-gray-400 hover:border-brand-orange/30 hover:text-brand-orange'}
                                                         `}
                                                     >
+                                                        {selectedVariant?.id === variant.id && <Check size={12} />}
                                                         {variant.name}
                                                     </button>
                                                 ))}
@@ -1039,7 +1079,10 @@ export default function Catalog() {
                                             <div className="bg-black rounded-3xl overflow-hidden aspect-video relative group/video border-4 border-gray-100 shadow-xl">
                                                 {(selectedProduct.videoUrl.includes('youtube.com') || selectedProduct.videoUrl.includes('youtu.be') || selectedProduct.videoUrl.includes('vimeo.com')) ? (
                                                     <iframe 
-                                                        src={selectedProduct.videoUrl.replace('watch?v=', 'embed/').split('&')[0]} 
+                                                        src={selectedProduct.videoUrl.includes('youtu.be') 
+                                                            ? `https://www.youtube.com/embed/${selectedProduct.videoUrl.split('/').pop()?.split('?')[0]}`
+                                                            : selectedProduct.videoUrl.replace('watch?v=', 'embed/').split('&')[0]
+                                                        } 
                                                         className="w-full h-full"
                                                         title={selectedProduct.videoTitle || 'Product Tutorial'}
                                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1065,7 +1108,7 @@ export default function Catalog() {
                                 {/* Controller Actions */}
                                 <div className="mt-14 space-y-4">
                                     <a 
-                                        href={`https://wa.me/${config?.whatsapp || '919021313113'}?text=Bhai, I need a detailed quote for ${selectedProduct.title} (Model Ref: ${selectedProduct.id})`}
+                                        href={`https://wa.me/${config?.whatsapp || '919021313113'}?text=Bhai, I need a detailed quote for ${selectedProduct.title}${selectedVariant ? ` (${selectedProduct.variantLabel || 'Option'}: ${selectedVariant.name})` : ''} (Model Ref: ${selectedProduct.id})`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="w-full py-6 bg-green-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl shadow-green-100 hover:bg-green-600 hover:scale-[1.02] active:scale-95 transition-all"

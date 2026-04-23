@@ -28,18 +28,28 @@ export default function Header() {
   ];
 
   const LogoLink = () => (
-    <Link to="/" className="flex items-center gap-2">
-      <div className={`p-2 rounded-lg ${isScrolled ? 'bg-brand-blue text-white' : 'bg-white text-brand-blue'}`}>
-        <Hammer size={24} />
-      </div>
-      <div>
-        <h1 className={`font-heading font-bold text-xl leading-tight ${isScrolled ? 'text-brand-blue' : 'text-white'}`}>
+    <Link to="/" className="flex items-center gap-2 group">
+      <motion.div 
+        animate={{ 
+          scale: isScrolled ? 0.9 : 1,
+          rotate: isScrolled ? [0, -5, 0] : 0
+        }}
+        transition={{ duration: 0.3 }}
+        className={`p-2 rounded-lg transition-colors ${isScrolled ? 'bg-brand-blue text-white' : 'bg-white text-brand-blue'}`}
+      >
+        <Hammer size={24} className="group-hover:rotate-12 transition-transform" />
+      </motion.div>
+      <motion.div
+        animate={{ x: isScrolled ? -2 : 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h1 className={`font-heading font-bold text-xl leading-tight transition-colors ${isScrolled ? 'text-brand-blue' : 'text-white'}`}>
           Saify Machinery
         </h1>
-        <p className={`text-xs font-medium tracking-wider uppercase ${isScrolled ? 'text-gray-500' : 'text-gray-300'}`}>
+        <p className={`text-xs font-medium tracking-wider uppercase transition-colors ${isScrolled ? 'text-gray-500' : 'text-gray-300'}`}>
           Est. 2019
         </p>
-      </div>
+      </motion.div>
     </Link>
   );
 
@@ -136,7 +146,7 @@ export default function Header() {
               animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0, y: -20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="md:hidden bg-white shadow-2xl overflow-hidden border-t border-gray-100 relative z-50"
+              className="md:hidden bg-gradient-to-b from-white/95 via-white/80 to-brand-orange/5 backdrop-blur-xl shadow-2xl overflow-hidden border-t border-gray-100 relative z-50"
             >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               <ul className="flex flex-col gap-2">
