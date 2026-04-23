@@ -49,6 +49,207 @@ interface Category {
     seoKeywords?: string;
 }
 
+interface ProductCardProps {
+    prod: Product;
+    index: number;
+    viewMode: 'grid' | 'list';
+    categories: Category[];
+    compareList: any[];
+    toggleCompare: (p: Product) => void;
+    onSelect: (p: Product, initialVariant?: Variant) => void;
+    whatsappNumber: string;
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ 
+    prod, index, viewMode, categories, compareList, toggleCompare, onSelect, whatsappNumber 
+}) => {
+    const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+
+    const displayPrice = selectedVariant?.price || prod.price;
+    const displayImage = selectedVariant?.imageUrl || prod.imageUrl;
+
+    return (
+        <motion.div 
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ delay: index * 0.05 }}
+            className={`bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden group hover:shadow-2xl hover:shadow-gray-200/50 hover:border-brand-orange/30 transition-all duration-500
+                ${viewMode === 'list' ? 'flex flex-col md:flex-row p-6 items-center gap-8' : 'flex flex-col'}
+            `}
+        >
+            {/* Image Container */}
+            <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-full md:w-56 h-56 md:h-56 shrink-0 rounded-[1.5rem]' : 'aspect-square'}`}>
+                <motion.img 
+                    key={displayImage}
+                    initial={{ opacity: 0.5 }}
+                    animate={{ opacity: 1 }}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.6 }}
+                    src={displayImage} 
+                    alt={prod.title} 
+                    className="w-full h-full object-cover" 
+                />
+                
+                {/* Badges Overlay */}
+                <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                    {prod.featured && (
+                        <div className="bg-brand-orange text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-xl shadow-brand-orange/30">
+                            Top Pick
+                        </div>
+                    )}
+                    {prod.variants && prod.variants.length > 0 && (
+                        <div className="bg-white/95 backdrop-blur-md text-brand-blue text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-blue/20 flex items-center gap-1.5">
+                            <SlidersHorizontal size={10} className="text-brand-orange" />
+                            {prod.variants.length} {prod.variantLabel || 'Options'}
+                        </div>
+                    )}
+                    {prod.videoUrl && (
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onSelect(prod, selectedVariant || undefined);
+                            }}
+                            className="bg-white/90 backdrop-blur-md text-brand-orange text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-orange/20 flex items-center gap-1.5 animate-pulse-slow hover:bg-brand-orange hover:text-white transition-all pointer-events-auto"
+                        >
+                            <Play size={10} className="fill-current" />
+                            Watch Tutorial
+                        </button>
+                    )}
+                </div>
+
+                {/* Compare Toggle */}
+                <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCompare(prod);
+                    }}
+                    className={`absolute top-4 right-4 z-10 p-2.5 rounded-xl border-2 transition-all flex items-center justify-center
+                        ${compareList.find(p => p.id === prod.id) 
+                            ? 'bg-brand-blue border-brand-blue text-white' 
+                            : 'bg-white/80 border-white/50 text-gray-500 hover:border-brand-blue/50 hover:text-brand-blue backdrop-blur-md'}
+                    `}
+                    title="Compare Product"
+                >
+                    <ArrowLeftRight size={16} />
+                </button>
+
+                {/* Quick Action Overlay */}
+                <div className="absolute inset-0 bg-brand-blue-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                    {prod.videoUrl && (
+                        <button 
+                            onClick={() => onSelect(prod, selectedVariant || undefined)}
+                            className="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-brand-orange transition-all transform -translate-y-4 group-hover:translate-y-0"
+                        >
+                            <Play size={16} className="fill-current" />
+                            Watch Video
+                        </button>
+                    )}
+                    <button 
+                        onClick={() => onSelect(prod, selectedVariant || undefined)}
+                        className="bg-white text-gray-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-brand-orange hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0"
+                    >
+                        <Eye size={16} />
+                        Technical Info
+                    </button>
+                </div>
+            </div>
+
+            {/* Content Section */}
+            <div className={`p-8 flex flex-col flex-grow ${viewMode === 'list' ? 'p-0 text-center md:text-left' : ''}`}>
+                <div className="mb-4 flex flex-wrap items-center gap-2 justify-center md:justify-start">
+                    <span className="text-[9px] font-black uppercase text-brand-orange tracking-[0.15em] px-3 py-1 bg-brand-orange/5 rounded-full border border-brand-orange/10">
+                        {categories.find(c => c.id === prod.categoryId)?.title || 'Industrial'}
+                    </span>
+                    <span className="text-[9px] font-black uppercase text-gray-400 tracking-[0.15em] px-3 py-1 bg-gray-50 rounded-full border border-gray-100 italic">
+                        Model: {prod.id.substring(0, 8).toUpperCase()}
+                    </span>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-orange transition-colors mb-4 line-clamp-1">
+                    {prod.title}
+                </h3>
+                
+                <p className="text-gray-500 text-sm line-clamp-2 mb-6 leading-relaxed font-medium">
+                    {prod.description}
+                </p>
+
+                {/* Inline Variant Selection */}
+                {prod.variants && prod.variants.length > 0 && (
+                    <div className="mb-6 space-y-2">
+                        <p className="text-[8px] font-black uppercase text-gray-400 tracking-widest">{prod.variantLabel || 'Select Variant'}:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {prod.variants.slice(0, 4).map((v) => (
+                                <button
+                                    key={v.id}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedVariant(v);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-[9px] font-bold transition-all border
+                                        ${selectedVariant?.id === v.id 
+                                            ? 'bg-brand-blue border-brand-blue text-white shadow-md' 
+                                            : 'bg-gray-50 border-gray-100 text-gray-500 hover:border-brand-blue/30'}
+                                    `}
+                                >
+                                    {v.name}
+                                </button>
+                            ))}
+                            {prod.variants.length > 4 && (
+                                <button 
+                                    onClick={() => onSelect(prod)}
+                                    className="px-3 py-1.5 rounded-lg text-[9px] font-bold bg-white border border-dashed border-gray-200 text-gray-400 hover:border-brand-orange"
+                                >
+                                    +{prod.variants.length - 4} more
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+                
+                {/* Footer Actions */}
+                <div className="mt-auto pt-6 flex items-center justify-between gap-4 border-t border-gray-50">
+                    <div className="flex flex-col">
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 italic">Est. Pricing</span>
+                        <div className="text-brand-blue font-black text-lg font-mono tracking-tighter transition-all">
+                            {prod.enquiryOnly ? (
+                                <span className="text-[10px] text-brand-orange font-bold uppercase tracking-widest">Enquiry Only</span>
+                            ) : displayPrice ? (
+                                <span className="flex items-center gap-1">
+                                    <Tag size={14} className="opacity-30" />
+                                    {(!selectedVariant && prod.variants && prod.variants.length > 0) ? <span className="text-[8px] uppercase text-gray-400 mr-1">From</span> : null}
+                                    {displayPrice}
+                                </span>
+                            ) : (
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Enquiry only</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => onSelect(prod, selectedVariant || undefined)}
+                            className="p-3 text-gray-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-2xl transition-all border border-transparent hover:border-brand-blue/20"
+                            title="Technical Details"
+                        >
+                            <Maximize2 size={20} />
+                        </button>
+                        <a 
+                            href={`https://wa.me/${whatsappNumber}?text=Bhai, I am interested in ${prod.title}${selectedVariant ? ` (${selectedVariant.name})` : ''} (Model: ${prod.id})`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-green-500 text-white p-3.5 rounded-2xl shadow-xl shadow-green-100 hover:bg-green-600 transition-all hover:scale-110 active:scale-95"
+                        >
+                            <MessageSquare size={20} />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 export default function Catalog() {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -66,6 +267,24 @@ export default function Catalog() {
     const [advisorQuery, setAdvisorQuery] = useState('');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+    const [copied, setCopied] = useState(false);
+    const { 
+        compareList, 
+        toggleCompare, 
+        clearCompare, 
+        showCompareModal, 
+        setShowCompareModal 
+    } = useCompare();
+
+    const handleSelectProduct = (p: Product, initialVariant?: Variant) => {
+        setSelectedProduct(p);
+        setSelectedVariant(initialVariant || (p.variants?.[0] || null));
+        setActiveImageIndex(0);
+        setIsZoomed(false);
+    };
 
     // Dynamic Max Price for Slider
     const maxItemPrice = useMemo(() => {
@@ -86,17 +305,6 @@ export default function Catalog() {
             setMaxPrice(maxItemPrice);
         }
     }, [maxItemPrice, products.length]);
-    const [activeImageIndex, setActiveImageIndex] = useState(0);
-    const [copied, setCopied] = useState(false);
-    const [isZoomed, setIsZoomed] = useState(false);
-    const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
-    const { 
-        compareList, 
-        toggleCompare, 
-        clearCompare, 
-        showCompareModal, 
-        setShowCompareModal 
-    } = useCompare();
 
     useEffect(() => {
         if (!selectedProduct) {
@@ -660,149 +868,17 @@ export default function Catalog() {
                                         <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8" : "space-y-6"}>
                                             <AnimatePresence mode="popLayout">
                                                 {filteredProducts.map((prod, index) => (
-                                                    <motion.div 
-                                                        layout
+                                                    <ProductCard 
                                                         key={prod.id}
-                                                        initial={{ opacity: 0, y: 20 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.95 }}
-                                                        transition={{ delay: index * 0.05 }}
-                                                        className={`bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden group hover:shadow-2xl hover:shadow-gray-200/50 hover:border-brand-orange/30 transition-all duration-500
-                                                            ${viewMode === 'list' ? 'flex flex-col md:flex-row p-6 items-center gap-8' : 'flex flex-col'}
-                                                        `}
-                                                    >
-                                                        {/* Image Container */}
-                                                        <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-full md:w-56 h-56 md:h-56 shrink-0 rounded-[1.5rem]' : 'aspect-square'}`}>
-                                                            <motion.img 
-                                                                whileHover={{ scale: 1.1 }}
-                                                                transition={{ duration: 0.6 }}
-                                                                src={prod.imageUrl} 
-                                                                alt={prod.title} 
-                                                                className="w-full h-full object-cover" 
-                                                            />
-                                                            
-                                                            {/* Badges Overlay */}
-                                                            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                                                                {prod.featured && (
-                                                                    <div className="bg-brand-orange text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-xl shadow-brand-orange/30">
-                                                                        Top Pick
-                                                                    </div>
-                                                                )}
-                                                                {prod.variants && prod.variants.length > 0 && (
-                                                                    <div className="bg-white/95 backdrop-blur-md text-brand-blue text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-blue/20 flex items-center gap-1.5">
-                                                                        <SlidersHorizontal size={10} className="text-brand-orange" />
-                                                                        {prod.variants.length} {prod.variantLabel || 'Options'}
-                                                                    </div>
-                                                                )}
-                                                                {prod.videoUrl && (
-                                                                    <button 
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setSelectedProduct(prod);
-                                                                        }}
-                                                                        className="bg-white/90 backdrop-blur-md text-brand-orange text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-orange/20 flex items-center gap-1.5 animate-pulse-slow hover:bg-brand-orange hover:text-white transition-all pointer-events-auto"
-                                                                    >
-                                                                        <Play size={10} className="fill-current" />
-                                                                        Watch Tutorial
-                                                                    </button>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Compare Toggle */}
-                                                            <button 
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    toggleCompare(prod);
-                                                                }}
-                                                                className={`absolute top-4 right-4 z-10 p-2.5 rounded-xl border-2 transition-all flex items-center justify-center
-                                                                    ${compareList.find(p => p.id === prod.id) 
-                                                                        ? 'bg-brand-blue border-brand-blue text-white' 
-                                                                        : 'bg-white/80 border-white/50 text-gray-500 hover:border-brand-blue/50 hover:text-brand-blue backdrop-blur-md'}
-                                                                `}
-                                                                title="Compare Product"
-                                                            >
-                                                                <ArrowLeftRight size={16} />
-                                                            </button>
-
-                                                            {/* Quick Action Overlay */}
-                                                            <div className="absolute inset-0 bg-brand-blue-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
-                                                                {prod.videoUrl && (
-                                                                    <button 
-                                                                        onClick={() => setSelectedProduct(prod)}
-                                                                        className="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-brand-orange transition-all transform -translate-y-4 group-hover:translate-y-0"
-                                                                    >
-                                                                        <Play size={16} className="fill-current" />
-                                                                        Watch Video
-                                                                    </button>
-                                                                )}
-                                                                <button 
-                                                                    onClick={() => setSelectedProduct(prod)}
-                                                                    className="bg-white text-gray-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-brand-orange hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0"
-                                                                >
-                                                                    <Eye size={16} />
-                                                                    Technical Info
-                                                                </button>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Content Section */}
-                                                        <div className={`p-8 flex flex-col flex-grow ${viewMode === 'list' ? 'p-0 text-center md:text-left' : ''}`}>
-                                                            <div className="mb-4 flex flex-wrap items-center gap-2 justify-center md:justify-start">
-                                                                <span className="text-[9px] font-black uppercase text-brand-orange tracking-[0.15em] px-3 py-1 bg-brand-orange/5 rounded-full border border-brand-orange/10">
-                                                                    {categories.find(c => c.id === prod.categoryId)?.title || 'Industrial'}
-                                                                </span>
-                                                                <span className="text-[9px] font-black uppercase text-gray-400 tracking-[0.15em] px-3 py-1 bg-gray-50 rounded-full border border-gray-100 italic">
-                                                                    Model: {prod.id.substring(0, 8).toUpperCase()}
-                                                                </span>
-                                                            </div>
-
-                                                            <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-orange transition-colors mb-4 line-clamp-1">
-                                                                {prod.title}
-                                                            </h3>
-                                                            
-                                                            <p className="text-gray-500 text-sm line-clamp-2 mb-8 leading-relaxed font-medium">
-                                                                {prod.description}
-                                                            </p>
-                                                            
-                                                            {/* Footer Actions */}
-                                                            <div className="mt-auto pt-6 flex items-center justify-between gap-4 border-t border-gray-50">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 italic">Est. Pricing</span>
-                                                                    <div className="text-brand-blue font-black text-lg font-mono tracking-tighter">
-                                                                        {prod.enquiryOnly ? (
-                                                                            <span className="text-[10px] text-brand-orange font-bold uppercase tracking-widest">Enquiry Only</span>
-                                                                        ) : prod.price ? (
-                                                                            <span className="flex items-center gap-1">
-                                                                                <Tag size={14} className="opacity-30" />
-                                                                                {prod.variants && prod.variants.length > 0 ? <span className="text-[8px] uppercase text-gray-400 mr-1">From</span> : null}
-                                                                                {prod.price}
-                                                                            </span>
-                                                                        ) : (
-                                                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Enquiry only</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="flex items-center gap-3">
-                                                                    <button 
-                                                                        onClick={() => setSelectedProduct(prod)}
-                                                                        className="p-3 text-gray-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-2xl transition-all border border-transparent hover:border-brand-blue/20"
-                                                                        title="Technical Details"
-                                                                    >
-                                                                        <Maximize2 size={20} />
-                                                                    </button>
-                                                                    <a 
-                                                                        href={`https://wa.me/${config?.whatsapp || '919021313113'}?text=Bhai, I am interested in ${prod.title} (Model: ${prod.id})`}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="bg-green-500 text-white p-3.5 rounded-2xl shadow-xl shadow-green-100 hover:bg-green-600 transition-all hover:scale-110 active:scale-95"
-                                                                    >
-                                                                        <MessageSquare size={20} />
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </motion.div>
+                                                        prod={prod}
+                                                        index={index}
+                                                        viewMode={viewMode}
+                                                        categories={categories}
+                                                        compareList={compareList}
+                                                        toggleCompare={toggleCompare}
+                                                        onSelect={handleSelectProduct}
+                                                        whatsappNumber={config?.whatsapp || '919021313113'}
+                                                    />
                                                 ))}
                                             </AnimatePresence>
                                         </div>
