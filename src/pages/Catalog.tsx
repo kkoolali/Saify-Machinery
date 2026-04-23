@@ -10,9 +10,10 @@ import {
     ArrowRight, ShoppingBag, Grid, List as ListIcon,
     Loader2, Phone, MessageSquare, Maximize2, X, Eye,
     ZoomIn, ZoomOut, ChevronLeft, Play, Share2, Check,
-    ArrowLeftRight, Scale
+    ArrowLeftRight, Scale, SlidersHorizontal, Sparkles
 } from 'lucide-react';
 import { useCompare } from '../context/CompareContext';
+import TechnicalAdvisor from '../components/TechnicalAdvisor';
 
 interface Product {
     id: string;
@@ -46,7 +47,12 @@ export default function Catalog() {
     const [config, setConfig] = useState<any>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [selectedAvailability, setSelectedAvailability] = useState<string>('all');
+    const [minPrice, setMinPrice] = useState<number | ''>('');
+    const [maxPrice, setMaxPrice] = useState<number | ''>('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [copied, setCopied] = useState(false);
@@ -122,14 +128,29 @@ export default function Catalog() {
         };
     }, []);
 
+    const parsePrice = (priceStr?: string) => {
+        if (!priceStr) return 0;
+        const numericPart = priceStr.replace(/[^\d.]/g, '');
+        return parseFloat(numericPart) || 0;
+    };
+
     const filteredProducts = useMemo(() => {
         return products.filter(p => {
             const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                                 p.description.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
-            return matchesSearch && matchesCategory;
+            
+            const matchesAvailability = selectedAvailability === 'all' || 
+                (selectedAvailability === 'in-stock' && !p.enquiryOnly) || 
+                (selectedAvailability === 'enquiry-only' && p.enquiryOnly);
+
+            const priceNum = parsePrice(p.price);
+            const matchesMinPrice = minPrice === '' || priceNum >= minPrice;
+            const matchesMaxPrice = maxPrice === '' || priceNum <= maxPrice;
+            
+            return matchesSearch && matchesCategory && matchesAvailability && matchesMinPrice && matchesMaxPrice;
         });
-    }, [products, searchTerm, selectedCategory]);
+    }, [products, searchTerm, selectedCategory, selectedAvailability, minPrice, maxPrice]);
 
     const activeCategory = categories.find(c => c.id === selectedCategory);
     const activeCategoryTitle = activeCategory?.title || 'All Products';
@@ -265,7 +286,7 @@ export default function Catalog() {
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         
                         {/* Sidebar Filters - Redesigned as a Professional Console */}
-                        <aside className="lg:col-span-1 space-y-8">
+                        <aside className={`lg:col-span-1 space-y-8 lg:block ${isFilterOpen ? 'block' : 'hidden'}`}>
                             <div className="sticky top-24 space-y-8">
                                 {/* Console Box */}
                                 <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative">
@@ -274,19 +295,33 @@ export default function Catalog() {
                                     
                                     <div className="flex items-center justify-between mb-8">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-brand-orange/5 rounded-2xl flex items-center justify-center text-brand-orange">
+                                            <div className="w-10 h-10 bg-brand-orange/5 rounded-2xl flex items-center justify-center text-brand-orange pointer-events-none">
                                                 <Filter size={18} />
                                             </div>
                                             <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-900">Console</h2>
                                         </div>
-                                        {(selectedCategory !== 'all' || searchTerm) && (
+                                        <div className="flex items-center gap-4">
+                                            {(selectedCategory !== 'all' || searchTerm || selectedAvailability !== 'all' || minPrice !== '' || maxPrice !== '') && (
+                                                <button 
+                                                    onClick={() => { 
+                                                        setSelectedCategory('all'); 
+                                                        setSearchTerm(''); 
+                                                        setSelectedAvailability('all');
+                                                        setMinPrice('');
+                                                        setMaxPrice('');
+                                                    }}
+                                                    className="text-[10px] font-black text-brand-orange hover:scale-110 transition-transform uppercase tracking-[0.2em]"
+                                                >
+                                                    Reset
+                                                </button>
+                                            )}
                                             <button 
-                                                onClick={() => { setSelectedCategory('all'); setSearchTerm(''); }}
-                                                className="text-[10px] font-black text-brand-orange hover:scale-110 transition-transform uppercase tracking-[0.2em]"
+                                                onClick={() => setIsFilterOpen(false)}
+                                                className="lg:hidden text-gray-400 hover:text-gray-900"
                                             >
-                                                Reset
+                                                <X size={20} />
                                             </button>
-                                        )}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-10">
@@ -302,6 +337,58 @@ export default function Catalog() {
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-[1.25rem] focus:bg-white focus:border-brand-orange/30 focus:ring-4 focus:ring-brand-orange/5 outline-none transition-all text-sm font-bold shadow-inner"
                                                 />
+                                            </div>
+                                        </div>
+
+                                        {/* Availability Filter */}
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Availability Status</label>
+                                            <div className="flex flex-col gap-2">
+                                                {[
+                                                    { id: 'all', label: 'All Status', count: products.length },
+                                                    { id: 'in-stock', label: 'Available Now', count: products.filter(p => !p.enquiryOnly).length },
+                                                    { id: 'enquiry-only', label: 'Enquiry Only', count: products.filter(p => p.enquiryOnly).length }
+                                                ].map(option => (
+                                                    <button 
+                                                        key={option.id}
+                                                        onClick={() => setSelectedAvailability(option.id)}
+                                                        className={`flex items-center justify-between px-5 py-4 rounded-[1.25rem] text-sm font-bold transition-all ${
+                                                            selectedAvailability === option.id 
+                                                            ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/30 scale-[1.02]' 
+                                                            : 'bg-gray-50/50 text-gray-600 hover:bg-white hover:shadow-md'
+                                                        }`}
+                                                    >
+                                                        <span>{option.label}</span>
+                                                        <span className={`text-[9px] font-black px-2 py-1 rounded-full ${selectedAvailability === option.id ? 'bg-white/20 text-white' : 'bg-gray-200/50 text-gray-400'}`}>
+                                                            {option.count}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Price Thresholds */}
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Financial Parameters (₹)</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="relative">
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder="Min" 
+                                                        value={minPrice}
+                                                        onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value) : '')}
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-brand-orange/30 outline-none text-xs font-bold"
+                                                    />
+                                                </div>
+                                                <div className="relative">
+                                                    <input 
+                                                        type="number" 
+                                                        placeholder="Max" 
+                                                        value={maxPrice}
+                                                        onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
+                                                        className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-brand-orange/30 outline-none text-xs font-bold"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
@@ -391,7 +478,25 @@ export default function Catalog() {
                                         <p className="text-xs text-gray-500 mt-1">{filteredProducts.length} Results found</p>
                                     </div>
                                 </div>
-                                <div className="flex bg-gray-100 p-1 rounded-xl">
+                                
+                                <div className="flex items-center gap-3">
+                                    <button 
+                                        onClick={() => setIsAdvisorOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-brand-blue/20 hover:scale-105 transition-all"
+                                    >
+                                        <Sparkles size={16} />
+                                        <span className="hidden sm:inline">AI Advisor</span>
+                                    </button>
+
+                                    <button 
+                                        onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                        className={`lg:hidden flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${isFilterOpen ? 'bg-brand-blue text-white shadow-lg' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                    >
+                                        <SlidersHorizontal size={16} />
+                                        {isFilterOpen ? 'Close Filters' : 'Show Filters'}
+                                    </button>
+                                    
+                                    <div className="flex bg-gray-100 p-1 rounded-xl">
                                     <button 
                                         onClick={() => setViewMode('grid')}
                                         className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-brand-orange' : 'text-gray-400 hover:text-gray-600'}`}
@@ -406,8 +511,9 @@ export default function Catalog() {
                                     </button>
                                 </div>
                             </div>
+                        </div>
 
-                            {loading ? (
+                        {loading ? (
                                 <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
                                     {[...Array(6)].map((_, i) => (
                                         <div key={i} className={`bg-white rounded-3xl border border-gray-100 overflow-hidden animate-pulse ${viewMode === 'list' ? 'flex items-center gap-6 p-4 md:p-6' : 'flex flex-col'}`}>
@@ -572,6 +678,30 @@ export default function Catalog() {
             </main>
 
             <AnimatePresence>
+                {isAdvisorOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsAdvisorOpen(false)}
+                            className="absolute inset-0 bg-brand-blue-dark/95 backdrop-blur-md"
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden shadow-2xl relative z-10 border border-white/20"
+                        >
+                            <TechnicalAdvisor 
+                                products={products} 
+                                onClose={() => setIsAdvisorOpen(false)} 
+                                onSelectProduct={setSelectedProduct}
+                            />
+                        </motion.div>
+                    </div>
+                )}
+
                 {selectedProduct && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                         <motion.div 

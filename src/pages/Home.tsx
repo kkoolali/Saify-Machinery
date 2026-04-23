@@ -1,6 +1,7 @@
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import About from '../components/About';
+import AIAdvisorCTA from '../components/AIAdvisorCTA';
 import Products from '../components/Products';
 import FeaturedProducts from '../components/FeaturedProducts';
 import Brands from '../components/Brands';
@@ -16,6 +17,7 @@ export default function Home() {
             <main>
                 <Hero />
                 <About />
+                <AIAdvisorCTA />
                 <Products />
                 <FeaturedProducts />
                 <Brands />
