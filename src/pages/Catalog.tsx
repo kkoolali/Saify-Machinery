@@ -183,13 +183,22 @@ const ProductCard: React.FC<ProductCardProps> = ({
                         Compare
                     </button>
                     
-                    <button 
-                        onClick={() => onSelect(prod, selectedVariant || undefined)}
-                        className="bg-white/10 text-white border border-white/20 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-gray-900 transition-all transform translate-y-4 group-hover:translate-y-0 w-48 justify-center mt-2"
-                    >
-                        <Eye size={16} />
-                        Quick View
-                    </button>
+                    <div className="flex gap-2 mt-2 w-48">
+                        <button 
+                            onClick={() => onSelect(prod, selectedVariant || undefined)}
+                            className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white hover:text-gray-900 transition-all flex-1"
+                            title="Quick View"
+                        >
+                            <Eye size={16} />
+                        </button>
+                        <Link 
+                            to={`/product/${prod.id}`}
+                            className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white hover:text-brand-orange transition-all flex-1"
+                            title="Full Details Page"
+                        >
+                            <ArrowRight size={16} />
+                        </Link>
+                    </div>
                 </div>
             </div>
 
@@ -204,9 +213,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-orange transition-colors mb-4 line-clamp-1">
-                    {prod.title}
-                </h3>
+                <Link to={`/product/${prod.id}`}>
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-orange transition-colors mb-4 line-clamp-1">
+                        {prod.title}
+                    </h3>
+                </Link>
                 
                 <p className="text-gray-500 text-sm line-clamp-2 mb-6 leading-relaxed font-medium">
                     {prod.description}
