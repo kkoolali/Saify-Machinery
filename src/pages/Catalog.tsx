@@ -71,8 +71,9 @@ export default function Catalog() {
         if (products.length === 0) return 100000;
         const prices = products
             .map(p => {
-                if (!p.price) return 0;
-                const match = p.price.match(/\d+/g);
+                const priceStr = String(p.price || '');
+                if (!priceStr) return 0;
+                const match = priceStr.match(/\d+/g);
                 return match ? parseInt(match.join('')) : 0;
             })
             .filter(price => price > 0);
@@ -158,16 +159,20 @@ export default function Catalog() {
         };
     }, []);
 
-    const parsePrice = (priceStr?: string) => {
-        if (!priceStr) return 0;
+    const parsePrice = (priceVal?: any) => {
+        if (!priceVal) return 0;
+        const priceStr = String(priceVal);
         const numericPart = priceStr.replace(/[^\d.]/g, '');
         return parseFloat(numericPart) || 0;
     };
 
     const filteredProducts = useMemo(() => {
+        const searchLow = searchTerm.toLowerCase();
         return products.filter(p => {
-            const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                p.description.toLowerCase().includes(searchTerm.toLowerCase());
+            const title = String(p.title || '').toLowerCase();
+            const desc = String(p.description || '').toLowerCase();
+            
+            const matchesSearch = title.includes(searchLow) || desc.includes(searchLow);
             const matchesCategory = selectedCategory === 'all' || p.categoryId === selectedCategory;
             
             const matchesAvailability = selectedAvailability === 'all' || 
@@ -628,6 +633,12 @@ export default function Catalog() {
                                                                 {prod.featured && (
                                                                     <div className="bg-brand-orange text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-xl shadow-brand-orange/30">
                                                                         Top Pick
+                                                                    </div>
+                                                                )}
+                                                                {prod.videoUrl && (
+                                                                    <div className="bg-white/90 backdrop-blur-md text-brand-orange text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg border border-brand-orange/20 flex items-center gap-1.5 animate-pulse-slow">
+                                                                        <Play size={10} className="fill-brand-orange" />
+                                                                        Watch Tutorial
                                                                     </div>
                                                                 )}
                                                             </div>
