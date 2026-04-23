@@ -7,10 +7,11 @@ interface TechnicalAdvisorProps {
   products: any[];
   onClose?: () => void;
   onSelectProduct?: (product: any) => void;
+  initialQuery?: string;
 }
 
-export default function TechnicalAdvisor({ products, onClose, onSelectProduct }: TechnicalAdvisorProps) {
-  const [requirements, setRequirements] = useState('');
+export default function TechnicalAdvisor({ products, onClose, onSelectProduct, initialQuery }: TechnicalAdvisorProps) {
+  const [requirements, setRequirements] = useState(initialQuery || '');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RecommendationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

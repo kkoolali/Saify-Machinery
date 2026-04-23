@@ -63,6 +63,7 @@ export default function Catalog() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
     const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
+    const [advisorQuery, setAdvisorQuery] = useState('');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
 
@@ -293,10 +294,44 @@ export default function Catalog() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-gray-400 text-lg md:text-xl leading-relaxed max-w-xl"
+                                className="text-gray-400 text-lg md:text-xl leading-relaxed max-w-xl mb-10"
                             >
                                 {config?.catalogHeaderSubtitle || 'Explore our extensive range of machinery, hardware, and industrial solutions. Quality equipment for every project in Pulgaon.'}
                             </motion.p>
+
+                            {/* Prominent AI Advisor Input */}
+                            <motion.div 
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="max-w-2xl relative group"
+                            >
+                                <div className="absolute -inset-1 bg-gradient-to-r from-brand-orange to-orange-400 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                <form 
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        setIsAdvisorOpen(true);
+                                    }}
+                                    className="relative flex items-center bg-brand-blue-dark/50 backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 pr-4 shadow-2xl"
+                                >
+                                    <div className="pl-6 pr-4 text-brand-orange">
+                                        <Sparkles size={24} className="animate-pulse" />
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        value={advisorQuery}
+                                        onChange={(e) => setAdvisorQuery(e.target.value)}
+                                        placeholder="Bhai, what do you need? (e.g. Pump for 3 floors)"
+                                        className="flex-grow bg-transparent border-none text-white placeholder:text-white/30 text-lg py-4 px-2 focus:ring-0 outline-none"
+                                    />
+                                    <button 
+                                        type="submit"
+                                        className="bg-brand-orange hover:bg-brand-orange-light text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-brand-orange/20 flex items-center gap-2"
+                                    >
+                                        Ask AI <ArrowRight size={16} />
+                                    </button>
+                                </form>
+                            </motion.div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-6">
@@ -361,6 +396,24 @@ export default function Catalog() {
                                     </div>
 
                                     <div className="space-y-10">
+                                        {/* AI Advisor Shortcut */}
+                                        <div className="bg-brand-blue-dark rounded-3xl p-6 text-white relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-orange/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-125 transition-transform duration-700"></div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <Sparkles size={20} className="text-brand-orange animate-pulse" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-brand-orange">Neural Expert</span>
+                                                </div>
+                                                <h3 className="text-lg font-black italic tracking-tight leading-tight mb-4">Confused Bhai?<br/><span className="text-gray-400">Let AI help you.</span></h3>
+                                                <button 
+                                                    onClick={() => setIsAdvisorOpen(true)}
+                                                    className="w-full py-3 bg-white text-brand-blue-dark rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-brand-orange hover:text-white transition-all shadow-xl shadow-black/5"
+                                                >
+                                                    Open Advisor
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         {/* Search Filter */}
                                         <div className="space-y-4">
                                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Search Module</label>
@@ -773,6 +826,7 @@ export default function Catalog() {
                                 products={products} 
                                 onClose={() => setIsAdvisorOpen(false)} 
                                 onSelectProduct={setSelectedProduct}
+                                initialQuery={advisorQuery}
                             />
                         </motion.div>
                     </div>
