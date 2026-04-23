@@ -13,6 +13,7 @@ import {
     ArrowLeftRight, Scale, SlidersHorizontal, Sparkles
 } from 'lucide-react';
 import { useCompare } from '../context/CompareContext';
+import { useCart } from '../context/CartContext';
 import TechnicalAdvisor from '../components/TechnicalAdvisor';
 
 interface Variant {
@@ -64,9 +65,24 @@ const ProductCard: React.FC<ProductCardProps> = ({
     prod, index, viewMode, categories, compareList, toggleCompare, onSelect, whatsappNumber 
 }) => {
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+    const { addToCart } = useCart();
 
     const displayPrice = selectedVariant?.price || prod.price;
     const displayImage = selectedVariant?.imageUrl || prod.imageUrl;
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (prod.enquiryOnly) return;
+        addToCart({
+            productId: prod.id,
+            productTitle: prod.title,
+            variantId: selectedVariant?.id,
+            variantName: selectedVariant?.name,
+            quantity: 1,
+            price: displayPrice || '0',
+            imageUrl: displayImage
+        });
+    };
 
     return (
         <motion.div 
@@ -228,6 +244,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {!prod.enquiryOnly && (
+                            <button 
+                                onClick={handleAddToCart}
+                                className="bg-brand-blue text-white p-3.5 rounded-2xl shadow-xl shadow-brand-blue/20 hover:bg-brand-orange hover:shadow-brand-orange/30 transition-all hover:scale-110 active:scale-95"
+                                title="Add to Cart"
+                            >
+                                <ShoppingBag size={20} />
+                            </button>
+                        )}
                         <button 
                             onClick={() => onSelect(prod, selectedVariant || undefined)}
                             className="p-3 text-gray-400 hover:text-brand-blue hover:bg-brand-blue/5 rounded-2xl transition-all border border-transparent hover:border-brand-blue/20"
@@ -278,6 +303,7 @@ export default function Catalog() {
         showCompareModal, 
         setShowCompareModal 
     } = useCompare();
+    const { addToCart } = useCart();
 
     const handleSelectProduct = (p: Product, initialVariant?: Variant) => {
         setSelectedProduct(p);
@@ -1183,6 +1209,25 @@ export default function Catalog() {
 
                                 {/* Controller Actions */}
                                 <div className="mt-14 space-y-4">
+                                    {!selectedProduct.enquiryOnly && (
+                                        <button 
+                                            onClick={() => {
+                                                addToCart({
+                                                    productId: selectedProduct.id,
+                                                    productTitle: selectedProduct.title,
+                                                    variantId: selectedVariant?.id,
+                                                    variantName: selectedVariant?.name,
+                                                    quantity: 1,
+                                                    price: selectedVariant?.price || selectedProduct.price || '0',
+                                                    imageUrl: selectedVariant?.imageUrl || selectedProduct.imageUrl
+                                                });
+                                            }}
+                                            className="w-full py-6 bg-brand-blue text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl shadow-brand-blue/20 hover:bg-brand-orange hover:shadow-brand-orange/30 hover:scale-[1.02] active:scale-95 transition-all"
+                                        >
+                                            <ShoppingBag size={20} />
+                                            Add to Order
+                                        </button>
+                                    )}
                                     <a 
                                         href={`https://wa.me/${config?.whatsapp || '919021313113'}?text=Bhai, I need a detailed quote for ${selectedProduct.title}${selectedVariant ? ` (${selectedProduct.variantLabel || 'Option'}: ${selectedVariant.name})` : ''} (Model Ref: ${selectedProduct.id})`}
                                         target="_blank"

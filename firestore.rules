@@ -67,6 +67,18 @@ service cloud.firestore {
              data.createdAt == request.time;
     }
 
+    function isValidOrder(data) {
+      return data.customer is map &&
+             data.customer.name is string && data.customer.name.size() <= 256 &&
+             data.customer.email is string && data.customer.email.size() <= 256 &&
+             data.customer.phone is string && data.customer.phone.size() <= 32 &&
+             data.customer.address is string && data.customer.address.size() <= 1024 &&
+             data.items is list && data.items.size() >= 1 && data.items.size() <= 100 &&
+             data.total is string && data.total.size() <= 64 &&
+             data.status in ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] &&
+             data.createdAt is number;
+    }
+
     function isValidBrand(data) {
       return data.name is string && data.name.size() <= 256 &&
              data.logo is string && data.logo.size() <= 2048 &&
@@ -156,6 +168,11 @@ service cloud.firestore {
 
     match /inquiries/{inquiryId} {
       allow create: if isValidInquiry(incoming()) && isValidId(inquiryId);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if isValidOrder(incoming()) && isValidId(orderId);
       allow read, update, delete: if isAdmin();
     }
 

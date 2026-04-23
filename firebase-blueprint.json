@@ -104,6 +104,44 @@
         "createdAt": { "type": "number" }
       },
       "required": ["title", "description", "categoryId", "imageUrl", "featured"]
+    },
+    "Order": {
+      "title": "Customer Order",
+      "description": "An online order placed by a customer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customer": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" },
+            "phone": { "type": "string" },
+            "address": { "type": "string" }
+          },
+          "required": ["name", "email", "phone", "address"]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "productTitle": { "type": "string" },
+              "variantId": { "type": "string" },
+              "variantName": { "type": "string" },
+              "quantity": { "type": "number" },
+              "price": { "type": "string" },
+              "imageUrl": { "type": "string" }
+            },
+            "required": ["productId", "productTitle", "quantity", "price"]
+          }
+        },
+        "total": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "processing", "shipped", "delivered", "cancelled"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["customer", "items", "total", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -126,6 +164,10 @@
     "inquiries": {
       "schema": { "$ref": "#/entities/Inquiry" },
       "description": "Contact form submissions."
+    },
+    "orders": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Online orders placed via the checkout process."
     },
     "admins": {
       "schema": { "$ref": "#/entities/Admin" },
