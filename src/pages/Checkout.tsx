@@ -3,27 +3,44 @@ import { motion } from 'motion/react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import PhoneAuth from '../components/PhoneAuth';
 import { 
     ShoppingBag, Trash2, Plus, Minus, ArrowRight,
     User, Mail, Phone, MapPin, CheckCircle, Loader2,
-    ChevronLeft
+    ChevronLeft, Lock
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Checkout() {
     const { cart, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount } = useCart();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [isPhoneVerified, setIsPhoneVerified] = useState(false);
     const navigate = useNavigate();
+
+    // Initialize with verified phone if user already has one
+    useState(() => {
+        if (user?.phoneNumber) {
+            setIsPhoneVerified(true);
+        }
+    });
 
     const [customer, setCustomer] = useState({
         name: '',
         email: '',
-        phone: '',
+        phone: user?.phoneNumber || '',
         address: ''
     });
+
+    // Sync phone if verification happens
+    const handlePhoneSuccess = (verifiedNumber: string) => {
+        setIsPhoneVerified(true);
+        setCustomer(prev => ({ ...prev, phone: verifiedNumber }));
+    };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -193,102 +210,122 @@ export default function Checkout() {
                                 </Link>
                             </div>
 
-                            {/* Checkout Form */}
+                            {/* Checkout Form or Phone Auth */}
                             <div className="lg:col-span-5">
                                 <motion.div 
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     className="bg-white rounded-[2.5rem] shadow-2xl shadow-brand-blue/5 border border-gray-100 overflow-hidden sticky top-32"
                                 >
-                                    <div className="p-10 bg-gray-50/50 border-b border-gray-100">
-                                        <h3 className="text-2xl font-heading font-black italic text-gray-900 tracking-tighter leading-none mb-2">Delivery Details</h3>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Enter valid shipping credentials</p>
-                                    </div>
-                                    <form onSubmit={handleSubmit} className="p-10 space-y-6">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                <User size={12} className="text-brand-orange" /> Full Name
-                                            </label>
-                                            <input 
-                                                required
-                                                type="text"
-                                                name="name"
-                                                value={customer.name}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter your name"
-                                                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                    <Mail size={12} className="text-brand-orange" /> Email Address
-                                                </label>
-                                                <input 
-                                                    required
-                                                    type="email"
-                                                    name="email"
-                                                    value={customer.email}
-                                                    onChange={handleInputChange}
-                                                    placeholder="mail@shope.com"
-                                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic"
-                                                />
+                                    {!isPhoneVerified ? (
+                                        <div className="p-10">
+                                            <div className="flex items-center gap-3 mb-8">
+                                                <div className="p-3 bg-brand-orange/10 text-brand-orange rounded-2xl">
+                                                    <Lock size={24} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-heading font-black italic text-gray-900 tracking-tight leading-none mb-1">Authorization Center</h3>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Verify identity to unlock order engine</p>
+                                                </div>
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                    <Phone size={12} className="text-brand-orange" /> Phone Number
-                                                </label>
-                                                <input 
-                                                    required
-                                                    type="tel"
-                                                    name="phone"
-                                                    value={customer.phone}
-                                                    onChange={handleInputChange}
-                                                    placeholder="90213 13113"
-                                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic"
-                                                />
+                                            <PhoneAuth onSuccess={handlePhoneSuccess} />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="p-10 bg-gray-50/50 border-b border-gray-100">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h3 className="text-2xl font-heading font-black italic text-gray-900 tracking-tighter leading-none">Delivery Details</h3>
+                                                    <div className="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-600 rounded-full text-[8px] font-black uppercase tracking-widest border border-green-100">
+                                                        <CheckCircle size={10} /> Verified
+                                                    </div>
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Enter valid shipping credentials</p>
                                             </div>
-                                        </div>
+                                            <form onSubmit={handleSubmit} className="p-10 space-y-6">
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                        <User size={12} className="text-brand-orange" /> Full Name
+                                                    </label>
+                                                    <input 
+                                                        required
+                                                        type="text"
+                                                        name="name"
+                                                        value={customer.name}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Enter your name"
+                                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic"
+                                                    />
+                                                </div>
 
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                                <MapPin size={12} className="text-brand-orange" /> Delivery Address
-                                            </label>
-                                            <textarea 
-                                                required
-                                                name="address"
-                                                value={customer.address}
-                                                onChange={handleInputChange}
-                                                rows={3}
-                                                placeholder="Full site address or warehouse location"
-                                                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic resize-none"
-                                            />
-                                        </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                            <Mail size={12} className="text-brand-orange" /> Email Address
+                                                        </label>
+                                                        <input 
+                                                            required
+                                                            type="email"
+                                                            name="email"
+                                                            value={customer.email}
+                                                            onChange={handleInputChange}
+                                                            placeholder="mail@shope.com"
+                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                            <Phone size={12} className="text-brand-orange" /> Phone Number
+                                                        </label>
+                                                        <input 
+                                                            disabled
+                                                            type="tel"
+                                                            name="phone"
+                                                            value={customer.phone}
+                                                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-gray-100 transition-all outline-none font-black italic tracking-widest text-gray-400 opacity-70"
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                        <div className="pt-4">
-                                            <button 
-                                                disabled={loading}
-                                                type="submit"
-                                                className="w-full py-6 bg-brand-orange text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl shadow-brand-orange/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:pointer-events-none"
-                                            >
-                                                {loading ? (
-                                                    <>
-                                                        <Loader2 size={24} className="animate-spin" />
-                                                        Processing Order...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Finalize Order <ArrowRight size={20} />
-                                                    </>
-                                                )}
-                                            </button>
-                                            <p className="text-[9px] text-gray-400 font-bold uppercase text-center mt-6 tracking-widest leading-relaxed">
-                                                By finalizing, you agree to our <span className="text-brand-blue decoration-dotted underline cursor-help">Technical Fulfillment Policy</span>. <br/>
-                                                Payment will be settled offline post technical verification.
-                                            </p>
-                                        </div>
-                                    </form>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                        <MapPin size={12} className="text-brand-orange" /> Delivery Address
+                                                    </label>
+                                                    <textarea 
+                                                        required
+                                                        name="address"
+                                                        value={customer.address}
+                                                        onChange={handleInputChange}
+                                                        rows={3}
+                                                        placeholder="Full site address or warehouse location"
+                                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue focus:bg-white transition-all outline-none font-medium italic resize-none"
+                                                    />
+                                                </div>
+
+                                                <div className="pt-4">
+                                                    <button 
+                                                        disabled={loading}
+                                                        type="submit"
+                                                        className="w-full py-6 bg-brand-orange text-white rounded-[2rem] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl shadow-brand-orange/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:pointer-events-none"
+                                                    >
+                                                        {loading ? (
+                                                            <>
+                                                                <Loader2 size={24} className="animate-spin" />
+                                                                Processing Order...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                Finalize Order <ArrowRight size={20} />
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                    <p className="text-[9px] text-gray-400 font-bold uppercase text-center mt-6 tracking-widest leading-relaxed">
+                                                        By finalizing, you agree to our <span className="text-brand-blue decoration-dotted underline cursor-help">Technical Fulfillment Policy</span>. <br/>
+                                                        Payment will be settled offline post technical verification.
+                                                    </p>
+                                                </div>
+                                            </form>
+                                        </>
+                                    )}
                                 </motion.div>
                             </div>
                         </div>

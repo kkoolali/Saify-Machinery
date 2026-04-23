@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Hammer, Phone, Scale, ShoppingBag } from 'lucide-react';
+import { Menu, X, Hammer, Phone, Scale, ShoppingBag, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCompare } from '../context/CompareContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -11,6 +12,7 @@ export default function Header() {
   const location = useLocation();
   const { compareList, setShowCompareModal } = useCompare();
   const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -105,6 +107,19 @@ export default function Header() {
                 </span>
               </button>
             )}
+
+            <Link
+              to="/wishlist"
+              className={`relative p-2.5 rounded-xl transition-all ${isScrolled ? 'bg-brand-blue/5 text-brand-blue hover:bg-brand-blue/10' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              title="View Wishlist"
+            >
+              <Heart size={20} className={wishlistCount > 0 ? (isScrolled ? 'fill-brand-orange text-brand-orange' : 'fill-white text-white') : ''} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-orange text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-in zoom-in duration-300">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             <Link
               to="/checkout"

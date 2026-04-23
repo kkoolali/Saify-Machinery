@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import About from '../components/About';
@@ -11,6 +12,20 @@ import Footer from '../components/Footer';
 import FloatingWhatsApp from '../components/FloatingWhatsApp';
 
 export default function Home() {
+    useEffect(() => {
+        document.title = "Saify Machinery - Hardware & Plumbing in Pulgaon";
+        
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) {
+            metaDesc.setAttribute('content', "Saify Machinery - Pulgaon's Trusted Hardware Partner. Complete Plumbing & Machinery Solutions Under One Roof.");
+        }
+
+        let keywordsMeta = document.querySelector('meta[name="keywords"]');
+        if (keywordsMeta) {
+            keywordsMeta.setAttribute('content', "Hardware shop in Pulgaon, Plumbing materials Pulgaon, Water tank dealer Pulgaon, Texmo dealer Pulgaon, Motor pump shop near me");
+        }
+    }, []);
+
     return (
         <div className="font-sans text-gray-900 w-full overflow-x-hidden">
             <Header />

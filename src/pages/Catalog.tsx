@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { db } from '../lib/firebase';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -10,10 +11,11 @@ import {
     ArrowRight, ShoppingBag, Grid, List as ListIcon,
     Loader2, Phone, MessageSquare, Maximize2, X, Eye,
     ZoomIn, ZoomOut, ChevronLeft, Play, Share2, Check,
-    ArrowLeftRight, Scale, SlidersHorizontal, Sparkles
+    ArrowLeftRight, Scale, SlidersHorizontal, Sparkles, Heart
 } from 'lucide-react';
 import { useCompare } from '../context/CompareContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import TechnicalAdvisor from '../components/TechnicalAdvisor';
 
 interface Variant {
@@ -66,6 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
     const { addToCart } = useCart();
+    const { toggleWishlist, isInWishlist } = useWishlist();
 
     const displayPrice = selectedVariant?.price || prod.price;
     const displayImage = selectedVariant?.imageUrl || prod.imageUrl;
@@ -108,6 +111,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     className="w-full h-full object-cover" 
                 />
                 
+                {/* Overlay Effect on Hover */}
+                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0" />
+                
                 {/* Badges Overlay */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                     {prod.featured && (
@@ -135,39 +141,54 @@ const ProductCard: React.FC<ProductCardProps> = ({
                     )}
                 </div>
 
-                {/* Compare Toggle */}
-                <button 
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        toggleCompare(prod);
-                    }}
-                    className={`absolute top-4 right-4 z-10 p-2.5 rounded-xl border-2 transition-all flex items-center justify-center
-                        ${compareList.find(p => p.id === prod.id) 
-                            ? 'bg-brand-blue border-brand-blue text-white' 
-                            : 'bg-white/80 border-white/50 text-gray-500 hover:border-brand-blue/50 hover:text-brand-blue backdrop-blur-md'}
-                    `}
-                    title="Compare Product"
-                >
-                    <ArrowLeftRight size={16} />
-                </button>
-
                 {/* Quick Action Overlay */}
-                <div className="absolute inset-0 bg-brand-blue-dark/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
-                    {prod.videoUrl && (
+                <div className="absolute inset-0 bg-brand-blue-dark/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 backdrop-blur-sm z-20">
+                    {!prod.enquiryOnly && (
                         <button 
-                            onClick={() => onSelect(prod, selectedVariant || undefined)}
-                            className="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-brand-orange transition-all transform -translate-y-4 group-hover:translate-y-0"
+                            onClick={handleAddToCart}
+                            className="bg-brand-orange text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-brand-orange transition-all transform -translate-y-4 group-hover:translate-y-0 w-48 justify-center shadow-xl shadow-brand-orange/20"
                         >
-                            <Play size={16} className="fill-current" />
-                            Watch Video
+                            <ShoppingBag size={16} className="fill-current" />
+                            Add to Cart
                         </button>
                     )}
+                    
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleWishlist(prod);
+                        }}
+                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all transform translate-y-4 group-hover:translate-y-0 w-48 justify-center shadow-xl
+                            ${isInWishlist(prod.id) 
+                                ? 'bg-white text-brand-orange hover:bg-gray-100' 
+                                : 'bg-white/10 text-white hover:bg-brand-orange border border-white/20 hover:border-transparent'}
+                        `}
+                    >
+                        <Heart size={16} className={isInWishlist(prod.id) ? 'fill-current' : ''} />
+                        {isInWishlist(prod.id) ? 'Wishlisted' : 'Wishlist'}
+                    </button>
+                    
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCompare(prod);
+                        }}
+                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 transition-all transform translate-y-4 group-hover:translate-y-0 w-48 justify-center shadow-xl
+                            ${compareList.find(p => p.id === prod.id) 
+                                ? 'bg-white text-brand-blue hover:bg-gray-100' 
+                                : 'bg-white/10 text-white hover:bg-brand-blue border border-white/20 hover:border-transparent'}
+                        `}
+                    >
+                        <ArrowLeftRight size={16} />
+                        Compare
+                    </button>
+                    
                     <button 
                         onClick={() => onSelect(prod, selectedVariant || undefined)}
-                        className="bg-white text-gray-900 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-brand-orange hover:text-white transition-all transform translate-y-4 group-hover:translate-y-0"
+                        className="bg-white/10 text-white border border-white/20 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-white hover:text-gray-900 transition-all transform translate-y-4 group-hover:translate-y-0 w-48 justify-center mt-2"
                     >
                         <Eye size={16} />
-                        Technical Info
+                        Quick View
                     </button>
                 </div>
             </div>
@@ -504,6 +525,29 @@ export default function Catalog() {
                 />
 
                 <div className="container mx-auto px-4 md:px-6 relative z-10">
+                    <div className="mb-8 flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+                        <Link to="/" className="hover:text-brand-orange transition-colors">Home</Link>
+                        <ChevronRight size={14} className="text-gray-600" />
+                        <button 
+                            onClick={() => setSelectedCategory('all')} 
+                            className={`${selectedCategory === 'all' ? 'text-brand-orange' : 'hover:text-brand-orange transition-colors'}`}
+                        >
+                            All Products
+                        </button>
+                        {selectedCategory !== 'all' && activeCategoryTitle && (
+                            <>
+                                <ChevronRight size={14} className="text-gray-600" />
+                                <span className="text-white bg-white/10 px-2 py-0.5 rounded-md">{activeCategoryTitle}</span>
+                            </>
+                        )}
+                        {selectedProduct && (
+                            <>
+                                <ChevronRight size={14} className="text-gray-600" />
+                                <span className="text-white bg-white/10 px-2 py-0.5 rounded-md truncate max-w-[200px]">{selectedProduct.title}</span>
+                            </>
+                        )}
+                    </div>
+
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-12">
                         <div className="max-w-3xl">
                             <motion.div
@@ -663,62 +707,55 @@ export default function Catalog() {
                                             </div>
                                         </div>
 
-                                        {/* Category Selection Dropdown */}
+                                        {/* Category Selection Module */}
                                         <div className="space-y-4">
                                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Technical Category</label>
-                                            <div className="relative">
+                                            <div className="flex flex-col gap-2">
                                                 <button 
-                                                    onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                                                    className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 border border-transparent rounded-[1.25rem] focus:bg-white focus:border-brand-orange/30 transition-all font-bold text-sm text-gray-900 shadow-inner group"
+                                                    onClick={() => setSelectedCategory('all')}
+                                                    className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all border
+                                                        ${selectedCategory === 'all' 
+                                                            ? 'bg-brand-blue border-brand-blue text-white shadow-xl shadow-brand-blue/20' 
+                                                            : 'bg-white border-gray-100 text-gray-600 hover:border-brand-orange/30 hover:bg-brand-orange/5'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="p-1.5 bg-brand-orange/10 text-brand-orange rounded-lg">
-                                                            {selectedCategory === 'all' ? <Grid size={16} /> : <Package size={16} />}
+                                                        <div className={`p-2 rounded-xl ${selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-brand-blue/5 text-brand-blue'}`}>
+                                                            <Grid size={18} />
                                                         </div>
-                                                        <span>{selectedCategory === 'all' ? 'Full Inventory' : categories.find(c => c.id === selectedCategory)?.title}</span>
+                                                        <span className="font-bold text-sm">Full Inventory</span>
                                                     </div>
-                                                    <ChevronRight size={18} className={`text-gray-300 transition-transform duration-300 ${isCategoryDropdownOpen ? 'rotate-90' : ''}`} />
+                                                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                                        {products.length}
+                                                    </span>
                                                 </button>
-
-                                                <AnimatePresence>
-                                                    {isCategoryDropdownOpen && (
-                                                        <motion.div 
-                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-[2rem] shadow-2xl border border-gray-100 z-50 overflow-hidden"
-                                                        >
-                                                            <div className="max-h-60 overflow-y-auto p-2 scrollbar-hide">
-                                                                <button 
-                                                                    onClick={() => { setSelectedCategory('all'); setIsCategoryDropdownOpen(false); }}
-                                                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${selectedCategory === 'all' ? 'bg-brand-blue text-white' : 'hover:bg-gray-50 text-gray-600'}`}
-                                                                >
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Grid size={14} />
-                                                                        <span>All Products</span>
+                                                
+                                                <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+                                                    {categories.map(cat => {
+                                                        const count = products.filter(p => p.categoryId === cat.id).length;
+                                                        return (
+                                                            <button 
+                                                                key={cat.id}
+                                                                onClick={() => setSelectedCategory(cat.id)}
+                                                                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all border
+                                                                    ${selectedCategory === cat.id 
+                                                                        ? 'bg-brand-orange border-brand-orange text-white shadow-xl shadow-brand-orange/20' 
+                                                                        : 'bg-white border-gray-100 text-gray-600 hover:border-brand-blue/30 hover:bg-brand-blue/5'
+                                                                    }`}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`p-2 rounded-xl ${selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-brand-orange/5 text-brand-orange'}`}>
+                                                                        <Package size={18} />
                                                                     </div>
-                                                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${selectedCategory === 'all' ? 'bg-white/20' : 'bg-gray-100'}`}>{products.length}</span>
-                                                                </button>
-                                                                {categories.map(cat => {
-                                                                    const count = products.filter(p => p.categoryId === cat.id).length;
-                                                                    return (
-                                                                        <button 
-                                                                            key={cat.id}
-                                                                            onClick={() => { setSelectedCategory(cat.id); setIsCategoryDropdownOpen(false); }}
-                                                                            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${selectedCategory === cat.id ? 'bg-brand-blue text-white' : 'hover:bg-gray-50 text-gray-600'}`}
-                                                                        >
-                                                                            <div className="flex items-center gap-2">
-                                                                                <Package size={14} />
-                                                                                <span className="truncate">{cat.title}</span>
-                                                                            </div>
-                                                                            <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${selectedCategory === cat.id ? 'bg-white/20' : 'bg-gray-100'}`}>{count}</span>
-                                                                        </button>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
+                                                                    <span className="font-bold text-sm truncate">{cat.title}</span>
+                                                                </div>
+                                                                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                                                                    {count}
+                                                                </span>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
 

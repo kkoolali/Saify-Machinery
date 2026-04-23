@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { initializeFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -17,6 +17,7 @@ export const googleProvider = new GoogleAuthProvider();
 
 export const login = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
+export { RecaptchaVerifier, signInWithPhoneNumber };
 
 // Critical: Connection check as per guidelines
 async function testConnection() {
